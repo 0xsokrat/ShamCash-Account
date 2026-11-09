@@ -155,6 +155,35 @@
         <!-- يتم ملؤها ديناميكياً -->
       </div>
 
+      <!-- ربط قاعدة البيانات السحابية (مزامنة تلقائية) -->
+      <div class="pt-3 border-t border-slate-800 space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-xs font-bold text-sky-400">☁️ ربط قاعدة بيانات سحابية (Firebase / Supabase)</h3>
+            <p class="text-[11px] text-slate-400">ضع رابط قاعدة البيانات ليتم حفظ ومزامنة الرصيد تلقائياً بين الموبايل والكمبيوتر</p>
+          </div>
+          <span id="dbSyncStatus" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400">غير مربوط (حفظ محلي)</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <div class="sm:col-span-2">
+            <label for="dbUrlInput" class="block text-[11px] text-slate-400 mb-1">رابط قاعدة البيانات (Firebase Realtime DB URL)</label>
+            <input id="dbUrlInput" type="url" placeholder="https://your-project-default-rtdb.firebaseio.com" class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white num-font" />
+          </div>
+          <div>
+            <label for="dbSecretKeyInput" class="block text-[11px] text-slate-400 mb-1">معرّف خاص بك (أو رمز سري للمسار)</label>
+            <input id="dbSecretKeyInput" type="text" placeholder="مثال: shamcash_secret_123" class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white num-font" />
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="saveDbConfigBtn" type="button" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-xs font-bold text-white transition">
+            حفظ وربط قاعدة البيانات
+          </button>
+          <button id="pullFromDbBtn" type="button" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition">
+            🔄 جلب الرصيد من القاعدة الآن
+          </button>
+        </div>
+      </div>
+
       <!-- نموذج إضافة حساب جديد في الإعدادات -->
       <form id="addAccountForm" class="pt-3 border-t border-slate-800 space-y-3">
         <h3 class="text-xs font-bold text-emerald-400">+ إضافة حساب جديد</h3>
@@ -223,10 +252,126 @@
       return JSON.parse(JSON.stringify(defaultState));
     }
 
+    const DB_CONFIG_KEY = 'simple_balance_db_config_v1';
+
+    function loadDbConfig() {
+      try {
+        const raw = localStorage.getItem(DB_CONFIG_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch (e) {}
+      return { dbUrl: '', secretKey: 'my_balances' };
+    }
+
+    let dbConfig = loadDbConfig();
+
+    function getCloudEndpoint() {
+      if (!dbConfig || !dbConfig.dbUrl) return null;
+      const base = dbConfig.dbUrl.trim().replace(/\/+$/, '');
+      const key = encodeURIComponent((dbConfig.secretKey || 'my_balances').trim());
+      return `${base}/shamcash_${key}.json`;
+    }
+
+    function updateDbStatusBadge(text, isConnected) {
+      const badge = document.getElementById('dbSyncStatus');
+      if (!badge) return;
+      badge.textContent = text;
+      badge.className = isConnected
+        ? 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+        : 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400';
+    }
+
+    async function pushStateToCloud() {
+      const endpoint = getCloudEndpoint();
+      if (!endpoint) return;
+      try {
+        updateDbStatusBadge('جاري المزامنة...', true);
+        const res = await fetch(endpoint, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            accounts: state.accounts,
+            history: state.history,
+            updatedAt: Date.now()
+          })
+        });
+        if (res.ok) {
+          updateDbStatusBadge('متصل ومتزامن سحابياً ✓', true);
+        } else {
+          updateDbStatusBadge('خطأ في الاتصال بالقاعدة', false);
+        }
+      } catch (e) {
+        updateDbStatusBadge('تعذر الاتصال بالقاعدة', false);
+      }
+    }
+
+    async function pullStateFromCloud(silent) {
+      const endpoint = getCloudEndpoint();
+      if (!endpoint) {
+        if (!silent) showToast('أدخل رابط قاعدة البيانات أولاً');
+        return;
+      }
+      try {
+        updateDbStatusBadge('جاري الجلب...', true);
+        const res = await fetch(endpoint);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.accounts)) {
+            state.accounts = data.accounts;
+            state.history = Array.isArray(data.history) ? data.history : [];
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            } catch (e) {}
+            // تهيئة حقول قاعدة البيانات
+    document.getElementById('dbUrlInput').value = dbConfig.dbUrl || '';
+    document.getElementById('dbSecretKeyInput').value = dbConfig.secretKey || 'my_balances';
+    if (dbConfig.dbUrl) {
+      updateDbStatusBadge('متصل سحابياً ✓', true);
+    }
+
+    document.getElementById('saveDbConfigBtn').addEventListener('click', () => {
+      const urlVal = document.getElementById('dbUrlInput').value.trim();
+      const keyVal = document.getElementById('dbSecretKeyInput').value.trim() || 'my_balances';
+      dbConfig = { dbUrl: urlVal, secretKey: keyVal };
+      try {
+        localStorage.setItem(DB_CONFIG_KEY, JSON.stringify(dbConfig));
+      } catch (e) {}
+      if (urlVal) {
+        pullStateFromCloud(false);
+      } else {
+        updateDbStatusBadge('غير مربوط (حفظ محلي)', false);
+        showToast('تم إيقاف الربط السحابي والعودة للحفظ المحلي');
+      }
+    });
+
+    document.getElementById('pullFromDbBtn').addEventListener('click', () => {
+      pullStateFromCloud(false);
+    });
+
+    renderAll();
+    if (dbConfig.dbUrl) {
+      pullStateFromCloud(true);
+    }
+            updateDbStatusBadge('متصل ومتزامن سحابياً ✓', true);
+            if (!silent) showToast('تم جلب أحدث الأرصدة من قاعدة البيانات');
+          } else {
+            await pushStateToCloud();
+            if (!silent) showToast('تم رفع أرصدتك الحالية إلى قاعدة البيانات لأول مرة');
+          }
+        } else {
+          updateDbStatusBadge('تأكد من رابط وصلاحيات القاعدة', false);
+          if (!silent) showToast('تعذر القراءة، تأكد من الرابط وتفعيل Test Mode في Firebase');
+        }
+      } catch (e) {
+        updateDbStatusBadge('تعذر الاتصال بالقاعدة', false);
+        if (!silent) showToast('تعذر الاتصال بقاعدة البيانات');
+      }
+    }
+
     function saveState() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       } catch (e) {}
+      pushStateToCloud();
     }
 
     function showToast(msg) {
