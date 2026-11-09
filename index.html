@@ -155,11 +155,16 @@
       </form>
     </section>
 
-    <!-- 5. سجل العمليات والملخص اليومي -->
+    <!-- 5. سجل العمليات والملخص اليومي مع خيار التصدير -->
     <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-lg">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2.5 flex-wrap gap-2">
         <h2 class="text-xs font-bold text-slate-200">📜 السجل والملخص اليومي</h2>
-        <button id="clearHistoryBtn" type="button" class="text-[11px] text-slate-400 hover:text-rose-400 transition">مسح السجل</button>
+        <div class="flex items-center gap-2">
+          <button id="exportReportBtn" type="button" class="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-[11px] font-bold text-white transition flex items-center gap-1.5">
+            <span>📥</span> تصدير التقرير
+          </button>
+          <button id="clearHistoryBtn" type="button" class="text-[11px] text-slate-400 hover:text-rose-400 transition">مسح السجل</button>
+        </div>
       </div>
       <div id="historyList" class="space-y-3 max-h-96 overflow-y-auto"></div>
     </section>
@@ -300,7 +305,6 @@
       document.getElementById('totalSypDisplay').textContent = formatSyp(totalSyp);
       document.getElementById('activeAccountsBadge').textContent = `${activeAccs.length} حسابات مفعلة`;
 
-      // حساب الإجماليات الكلية (الإيداعات والسحوبات)
       let depUsd = 0, depSyp = 0, wdUsd = 0, wdSyp = 0;
       (state.history || []).forEach(h => {
         const amt = Number(h.amount) || 0;
@@ -386,7 +390,6 @@
         return;
       }
 
-      // تجميع العمليات حسب التاريخ (اليوم)
       const grouped = {};
       state.history.forEach(h => {
         const dateStr = h.date || new Date(Number(h.id.replace('h_', '')) || Date.now()).toLocaleDateString('en-CA');
@@ -408,7 +411,6 @@
         const dayBox = document.createElement('div');
         dayBox.className = 'space-y-2 bg-slate-950/60 border border-slate-800 rounded-xl p-3';
 
-        // ترويسة اليوم وملخصه
         let daySummaryHtml = `<div class="flex items-center justify-between text-xs border-b border-slate-800 pb-2">
           <span class="font-extrabold text-sky-400">📅 ${date}</span>
           <div class="flex items-center gap-2 text-[11px]">
@@ -535,7 +537,7 @@
           toAcc.usd = Number((Number(toAcc.usd || 0) + amount).toFixed(2));
         } else {
           fromAcc.syp = Math.round(Number(fromAcc.syp || 0) - amount);
-          toAcc.syp = Math.round(Number(fromAcc.syp || 0) + amount);
+          toAcc.syp = Math.round(Number(toAcc.syp || 0) + amount);
         }
 
         state.history.unshift({
@@ -594,6 +596,50 @@
       state.history = [];
       saveState(); renderHistory();
       showToast('تم مسح السجل');
+    });
+
+    // ميزة تصدير التقرير اليومي والسجل
+    document.getElementById('exportReportBtn').addEventListener('click', () => {
+      if (!state.history || state.history.length === 0) {
+        showToast('لا توجد عمليات لتصديرها');
+        return;
+      }
+
+      let reportText = "====================================\n";
+      reportText += "      تقرير الأرصدة والملخص المالي      \n";
+      reportText += "====================================\n\n";
+
+      // الأرصدة الحالية للحسابات
+      reportText += "--- أرصدة الحسابات المفعلة الحاليّة ---\n";
+      state.accounts.filter(a => a.active).forEach(acc => {
+        reportText += `• ${acc.name}: USD ${acc.usd} | SYP ${acc.syp}\n`;
+      });
+      reportText += "\n";
+
+      // سجل العمليات
+      reportText += "--- سجل العمليات التفصيلي ---\n";
+      state.history.forEach((h, index) => {
+        const date = h.date || 'غير محدد';
+        if (h.type === 'deposit') {
+          reportText += `${index + 1}. [إيداع] بتاريخ ${date} - المبلغ: ${h.amount} ${h.currency} إلى الحساب: ${h.accountName}\n`;
+        } else if (h.type === 'withdraw') {
+          reportText += `${index + 1}. [سحب] بتاريخ ${date} - المبلغ: ${h.amount} ${h.currency} من الحساب: ${h.accountName}\n`;
+        } else {
+          reportText += `${index + 1}. [نقل] بتاريخ ${date} - المبلغ: ${h.amount} ${h.currency} من ${h.fromName} إلى ${h.toName}\n`;
+        }
+      });
+
+      const blob = new Blob([reportText], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ShamCash_Report_${new Date().toISOString().slice(0, 10)}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      showToast('تم تصدير التقرير بنجاح ✓');
     });
 
     renderAll();
