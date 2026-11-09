@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>إدارة الرصيد والحسابات</title>
+  <title>لوحة الأرصدة والحسابات</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -37,16 +37,16 @@
 
   <div class="max-w-2xl mx-auto space-y-5">
 
-    <!-- شريط العنوان وزر الإعدادات -->
+    <!-- شريط العنوان وزر الانتقال للإعدادات -->
     <div class="flex items-center justify-between">
       <h1 class="text-lg font-extrabold text-white">لوحة الأرصدة والحسابات</h1>
-      <button id="toggleSettingsBtn" type="button" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 flex items-center gap-2 transition">
+      <a href="settings.html" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 flex items-center gap-2 transition">
         <span>⚙️</span>
         <span>الإعدادات والحسابات</span>
-      </button>
+      </a>
     </div>
 
-    <!-- 1. خانة قيمة الرصيد الكلي (بالأعلى وبحجم كبير وواضح) -->
+    <!-- 1. خانة قيمة الرصيد الكلي -->
     <section class="bg-gradient-to-br from-slate-900 to-slate-900/90 border-2 border-emerald-500/40 rounded-2xl p-5 shadow-xl">
       <div class="flex items-center justify-between mb-3">
         <span class="text-sm font-bold text-slate-300">قيمة الرصيد الكلي (للحسابات المفعلة)</span>
@@ -74,7 +74,7 @@
     <section class="space-y-2.5">
       <div class="flex items-center justify-between px-1">
         <h2 class="text-xs font-bold text-slate-400">أرصدة الحسابات المفعلة</h2>
-        <button id="quickSettingsLink" type="button" class="text-xs text-emerald-400 hover:underline font-semibold">تعديل الأسماء أو إضافة حساب</button>
+        <a href="settings.html" class="text-xs text-emerald-400 hover:underline font-semibold">إدارة الحسابات</a>
       </div>
       <div id="activeAccountsList" class="space-y-2.5"></div>
     </section>
@@ -130,81 +130,17 @@
       </form>
     </section>
 
-    <!-- 4. قسم الإعدادات -->
-    <section id="settingsSection" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-lg">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <div>
-          <h2 class="text-sm font-bold text-white">⚙️ قسم الإعدادات (إدارة الحسابات)</h2>
-          <p class="text-[11px] text-slate-400">سمِّ حساباتك، فعّل أو أوقف أي حساب، أو عدّل الرصيد يدوياً</p>
-        </div>
-      </div>
-
-      <div id="settingsAccountsList" class="space-y-2.5"></div>
-
-      <!-- ربط قاعدة البيانات السحابية -->
-      <div class="pt-3 border-t border-slate-800 space-y-3">
-        <div class="flex items-center justify-between">
-          <div>
-            <h3 class="text-xs font-bold text-sky-400">☁️ ربط قاعدة بيانات سحابية (Firebase)</h3>
-            <p class="text-[11px] text-slate-400">ضع رابط قاعدة البيانات ليتم حفظ ومزامنة الرصيد تلقائياً بين الموبايل والكمبيوتر</p>
-          </div>
-          <span id="dbSyncStatus" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400">غير مربوط (حفظ محلي)</span>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-          <div class="sm:col-span-2">
-            <label for="dbUrlInput" class="block text-[11px] text-slate-400 mb-1">رابط قاعدة البيانات (Firebase URL)</label>
-            <input id="dbUrlInput" type="url" placeholder="https://your-project-default-rtdb.firebaseio.com" class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white num-font" />
-          </div>
-          <div>
-            <label for="dbSecretKeyInput" class="block text-[11px] text-slate-400 mb-1">معرّف خاص بك أو رمز سري</label>
-            <input id="dbSecretKeyInput" type="text" placeholder="مثال: sokrat_wallet" class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white num-font" />
-          </div>
-        </div>
-        <div class="flex flex-wrap items-center gap-2">
-          <button id="saveDbConfigBtn" type="button" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-xs font-bold text-white transition">
-            حفظ وربط قاعدة البيانات
-          </button>
-          <button id="pullFromDbBtn" type="button" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition">
-            🔄 جلب الرصيد من القاعدة الآن
-          </button>
-        </div>
-      </div>
-
-      <!-- نموذج إضافة حساب جديد -->
-      <form id="addAccountForm" class="pt-3 border-t border-slate-800 space-y-3">
-        <h3 class="text-xs font-bold text-emerald-400">+ إضافة حساب جديد</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-          <div>
-            <label for="newAccName" class="block text-[11px] text-slate-400 mb-1">اسم الحساب</label>
-            <input id="newAccName" type="text" required placeholder="مثال: حساب 3" class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white" />
-          </div>
-          <div>
-            <label for="newAccUsd" class="block text-[11px] text-slate-400 mb-1">رصيد الدولار ($)</label>
-            <input id="newAccUsd" type="number" step="any" value="0" class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-xs font-bold text-emerald-400 num-font" />
-          </div>
-          <div>
-            <label for="newAccSyp" class="block text-[11px] text-slate-400 mb-1">رصيد السوري (ل.س)</label>
-            <input id="newAccSyp" type="number" step="any" value="0" class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-xs font-bold text-amber-400 num-font" />
-          </div>
-        </div>
-        <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white transition">
-          إضافة وتفعيل الحساب
-        </button>
-      </form>
-    </section>
-
-    <!-- 5. سجل آخر الحركات -->
-    <section class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 space-y-2.5">
+    <!-- 4. سجل العمليات في الصفحة الأولى -->
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2.5 shadow-lg">
       <div class="flex items-center justify-between">
-        <h2 class="text-xs font-bold text-slate-400">آخر العمليات المنفذة</h2>
+        <h2 class="text-xs font-bold text-slate-300">📜 سجل العمليات المنفذة</h2>
         <button id="clearHistoryBtn" type="button" class="text-[11px] text-slate-400 hover:text-rose-400 transition">مسح السجل</button>
       </div>
-      <div id="historyList" class="space-y-1.5 max-h-48 overflow-y-auto"></div>
+      <div id="historyList" class="space-y-1.5 max-h-64 overflow-y-auto"></div>
     </section>
 
   </div>
 
-  <!-- إشعار Toast -->
   <div id="toastBox" class="fixed bottom-4 left-4 z-50 hidden px-4 py-2.5 rounded-xl bg-slate-800 border border-emerald-500/40 text-white text-xs font-bold shadow-xl">
     <span id="toastText">تم التحديث</span>
   </div>
@@ -251,21 +187,11 @@
       return `${base}/shamcash_${key}.json`;
     }
 
-    function updateDbStatusBadge(text, isConnected) {
-      const badge = document.getElementById('dbSyncStatus');
-      if (!badge) return;
-      badge.textContent = text;
-      badge.className = isConnected
-        ? 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-        : 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400';
-    }
-
     async function pushStateToCloud() {
       const endpoint = getCloudEndpoint();
       if (!endpoint) return;
       try {
-        updateDbStatusBadge('جاري المزامنة...', true);
-        const res = await fetch(endpoint, {
+        await fetch(endpoint, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -274,24 +200,13 @@
             updatedAt: Date.now()
           })
         });
-        if (res.ok) {
-          updateDbStatusBadge('متصل ومتزامن سحابياً ✓', true);
-        } else {
-          updateDbStatusBadge('خطأ في الاتصال بالقاعدة', false);
-        }
-      } catch (e) {
-        updateDbStatusBadge('تعذر الاتصال بالقاعدة', false);
-      }
+      } catch (e) {}
     }
 
     async function pullStateFromCloud(silent) {
       const endpoint = getCloudEndpoint();
-      if (!endpoint) {
-        if (!silent) showToast('أدخل رابط قاعدة البيانات أولاً');
-        return;
-      }
+      if (!endpoint) return;
       try {
-        updateDbStatusBadge('جاري الجلب...', true);
         const res = await fetch(endpoint);
         if (res.ok) {
           const data = await res.json();
@@ -299,21 +214,10 @@
             state.accounts = data.accounts;
             state.history = Array.isArray(data.history) ? data.history : [];
             try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
-            updateDbStatusBadge('متصل ومتزامن سحابياً ✓', true);
             renderAll();
-            if (!silent) showToast('تم جلب أحدث الأرصدة من قاعدة البيانات');
-          } else {
-            await pushStateToCloud();
-            if (!silent) showToast('تم رفع أرصدتك الحالية إلى قاعدة البيانات');
           }
-        } else {
-          updateDbStatusBadge('تأكد من رابط وصلاحيات القاعدة', false);
-          if (!silent) showToast('تعذر القراءة، تأكد من تفعيل Test Mode في Firebase');
         }
-      } catch (e) {
-        updateDbStatusBadge('تعذر الاتصال بالقاعدة', false);
-        if (!silent) showToast('تعذر الاتصال بقاعدة البيانات');
-      }
+      } catch (e) {}
     }
 
     function saveState() {
@@ -329,7 +233,6 @@
       window._toastTimer = setTimeout(() => box.classList.add('hidden'), 2500);
     }
 
-    // تم تعديلها لتظهر بدون .00
     function formatUsd(val) {
       const n = Number(val) || 0;
       return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -355,7 +258,6 @@
     function renderAll() {
       renderTopAndActiveAccounts();
       renderAccountSelects();
-      renderSettingsAccounts();
       renderHistory();
     }
 
@@ -377,7 +279,7 @@
       list.innerHTML = '';
 
       if (activeAccs.length === 0) {
-        list.innerHTML = `<div class="bg-slate-900/70 border border-dashed border-slate-800 rounded-xl p-3 text-center text-xs text-slate-400">لا توجد حسابات مفعلة حالياً.</div>`;
+        list.innerHTML = `<div class="bg-slate-900/70 border border-dashed border-slate-800 rounded-xl p-3 text-center text-xs text-slate-400">لا توجد حسابات مفعلة. قم بتفعيلها من صفحة الإعدادات ⚙️.</div>`;
         return;
       }
 
@@ -434,39 +336,6 @@
       }
     }
 
-    function renderSettingsAccounts() {
-      const container = document.getElementById('settingsAccountsList');
-      container.innerHTML = '';
-
-      state.accounts.forEach((acc, idx) => {
-        const item = document.createElement('div');
-        item.className = 'bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2.5';
-        item.innerHTML = `
-          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
-            <div class="sm:col-span-4">
-              <label class="block text-[10px] text-slate-400 mb-0.5">اسم الحساب #${idx + 1}</label>
-              <input type="text" data-field="name" data-id="${acc.id}" value="${escapeHtml(acc.name)}" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs font-bold text-white" />
-            </div>
-            <div class="sm:col-span-3">
-              <label class="block text-[10px] text-slate-400 mb-0.5">رصيد الدولار ($)</label>
-              <input type="number" step="any" data-field="usd" data-id="${acc.id}" value="${acc.usd}" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs font-bold text-emerald-400 num-font" />
-            </div>
-            <div class="sm:col-span-3">
-              <label class="block text-[10px] text-slate-400 mb-0.5">رصيد السوري (ل.س)</label>
-              <input type="number" step="any" data-field="syp" data-id="${acc.id}" value="${acc.syp}" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs font-bold text-amber-400 num-font" />
-            </div>
-            <div class="sm:col-span-2 flex items-center justify-end gap-1.5 pt-3 sm:pt-4">
-              <button type="button" data-acc-action="toggle" data-id="${acc.id}" class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition ${acc.active ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800 text-slate-400 border border-slate-700'}">
-                ${acc.active ? 'مفعّل ✓' : 'موقوف'}
-              </button>
-              ${state.accounts.length > 1 ? `<button type="button" data-acc-action="delete" data-id="${acc.id}" class="px-2 py-1.5 rounded-lg bg-slate-900 hover:bg-rose-950 text-rose-400 text-xs transition" title="حذف">🗑️</button>` : ''}
-            </div>
-          </div>
-        `;
-        container.appendChild(item);
-      });
-    }
-
     function renderHistory() {
       const list = document.getElementById('historyList');
       list.innerHTML = '';
@@ -476,7 +345,7 @@
         return;
       }
 
-      state.history.slice(0, 15).forEach(h => {
+      state.history.forEach(h => {
         const row = document.createElement('div');
         row.className = 'bg-slate-950/80 border border-slate-800/80 rounded-lg px-3 py-1.5 flex items-center justify-between text-xs';
         const amountStr = h.currency === 'USD' ? formatUsd(h.amount) : formatSyp(h.amount);
@@ -596,63 +465,6 @@
       document.getElementById('opCurrency').value = 'USD';
     });
 
-    document.getElementById('settingsAccountsList').addEventListener('change', e => {
-      const input = e.target.closest('input[data-field]');
-      if (!input) return;
-      const id = input.getAttribute('data-id');
-      const field = input.getAttribute('data-field');
-      const acc = state.accounts.find(a => a.id === id);
-      if (!acc) return;
-
-      if (field === 'name') {
-        const val = input.value.trim();
-        if (val) acc.name = val;
-      } else if (field === 'usd') {
-        acc.usd = parseFloat(input.value) || 0;
-      } else if (field === 'syp') {
-        acc.syp = parseFloat(input.value) || 0;
-      }
-
-      saveState();
-      renderAll();
-      showToast('تم حفظ تعديل الحساب');
-    });
-
-    document.getElementById('settingsAccountsList').addEventListener('click', e => {
-      const btn = e.target.closest('button[data-acc-action]');
-      if (!btn) return;
-      const action = btn.getAttribute('data-acc-action');
-      const id = btn.getAttribute('data-id');
-      const acc = state.accounts.find(a => a.id === id);
-      if (!acc) return;
-
-      if (action === 'toggle') {
-        acc.active = !acc.active;
-        saveState(); renderAll();
-        showToast(acc.active ? `تم تفعيل ${acc.name}` : `تم إيقاف ${acc.name}`);
-      } else if (action === 'delete') {
-        if (state.accounts.length <= 1) return;
-        state.accounts = state.accounts.filter(a => a.id !== id);
-        saveState(); renderAll();
-        showToast('تم حذف الحساب');
-      }
-    });
-
-    document.getElementById('addAccountForm').addEventListener('submit', e => {
-      e.preventDefault();
-      const name = document.getElementById('newAccName').value.trim();
-      const usd = parseFloat(document.getElementById('newAccUsd').value) || 0;
-      const syp = parseFloat(document.getElementById('newAccSyp').value) || 0;
-      if (!name) return;
-
-      state.accounts.push({ id: 'acc_' + Date.now(), name, usd, syp, active: true });
-      saveState(); renderAll();
-      document.getElementById('newAccName').value = '';
-      document.getElementById('newAccUsd').value = '0';
-      document.getElementById('newAccSyp').value = '0';
-      showToast('تمت إضافة الحساب وتفعيله');
-    });
-
     document.getElementById('historyList').addEventListener('click', e => {
       const btn = e.target.closest('button[data-undo-id]');
       if (!btn) return;
@@ -691,32 +503,6 @@
       showToast('تم مسح السجل');
     });
 
-    document.getElementById('saveDbConfigBtn').addEventListener('click', () => {
-      const urlVal = document.getElementById('dbUrlInput').value.trim();
-      const keyVal = document.getElementById('dbSecretKeyInput').value.trim() || 'my_balances';
-      dbConfig = { dbUrl: urlVal, secretKey: keyVal };
-      try { localStorage.setItem(DB_CONFIG_KEY, JSON.stringify(dbConfig)); } catch (e) {}
-      if (urlVal) {
-        pullStateFromCloud(false);
-      } else {
-        updateDbStatusBadge('غير مربوط (حفظ محلي)', false);
-        showToast('تم إيقاف الربط السحابي');
-      }
-    });
-
-    document.getElementById('pullFromDbBtn').addEventListener('click', () => {
-      pullStateFromCloud(false);
-    });
-
-    function scrollToSettings() {
-      document.getElementById('settingsSection').scrollIntoView({ behavior: 'smooth' });
-    }
-    document.getElementById('toggleSettingsBtn').addEventListener('click', scrollToSettings);
-    document.getElementById('quickSettingsLink').addEventListener('click', scrollToSettings);
-
-    // تهيئة البيانات عند فتح الصفحة
-    document.getElementById('dbUrlInput').value = dbConfig.dbUrl || '';
-    document.getElementById('dbSecretKeyInput').value = dbConfig.secretKey || 'my_balances';
     renderAll();
     if (dbConfig.dbUrl) {
       pullStateFromCloud(true);
