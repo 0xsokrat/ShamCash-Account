@@ -70,7 +70,16 @@
       </div>
     </section>
 
-    <!-- 2. إجمالي الإيداعات والسحوبات الكلية -->
+    <!-- 2. خانات أرصدة الحسابات المفعلة -->
+    <section class="space-y-2.5">
+      <div class="flex items-center justify-between px-1">
+        <h2 class="text-xs font-bold text-slate-400">أرصدة الحسابات المفعلة</h2>
+        <a href="settings.html" class="text-xs text-emerald-400 hover:underline font-semibold">إدارة الحسابات</a>
+      </div>
+      <div id="activeAccountsList" class="space-y-2.5"></div>
+    </section>
+
+    <!-- 3. إجمالي الإيداعات والسحوبات الكلية -->
     <section class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <div class="bg-slate-900 border border-emerald-500/30 rounded-2xl p-4 flex items-center justify-between shadow">
         <div>
@@ -95,16 +104,7 @@
       </div>
     </section>
 
-    <!-- 3. خانات أرصدة الحسابات المفعلة -->
-    <section class="space-y-2.5">
-      <div class="flex items-center justify-between px-1">
-        <h2 class="text-xs font-bold text-slate-400">أرصدة الحسابات المفعلة</h2>
-        <a href="settings.html" class="text-xs text-emerald-400 hover:underline font-semibold">إدارة الحسابات</a>
-      </div>
-      <div id="activeAccountsList" class="space-y-2.5"></div>
-    </section>
-
-    <!-- 4. خانة العمليات المبسطة -->
+    <!-- 4. خانة العمليات المبسطة (إيداع، سحب، نقل) -->
     <section class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
       <div class="grid grid-cols-3 bg-slate-950/70 p-1.5 gap-1.5 border-b border-slate-800">
         <button id="modeDepositBtn" type="button" class="py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold transition bg-emerald-600 text-white shadow">
@@ -155,7 +155,7 @@
       </form>
     </section>
 
-    <!-- 5. سجل العمليات والملخص اليومي مع خيار التصدير -->
+    <!-- 5. سجل العمليات والملخص اليومي -->
     <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-lg">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2.5 flex-wrap gap-2">
         <h2 class="text-xs font-bold text-slate-200">📜 السجل والملخص اليومي</h2>
@@ -598,7 +598,6 @@
       showToast('تم مسح السجل');
     });
 
-    // ميزة تصدير التقرير اليومي والسجل
     document.getElementById('exportReportBtn').addEventListener('click', () => {
       if (!state.history || state.history.length === 0) {
         showToast('لا توجد عمليات لتصديرها');
@@ -609,14 +608,12 @@
       reportText += "      تقرير الأرصدة والملخص المالي      \n";
       reportText += "====================================\n\n";
 
-      // الأرصدة الحالية للحسابات
       reportText += "--- أرصدة الحسابات المفعلة الحاليّة ---\n";
       state.accounts.filter(a => a.active).forEach(acc => {
         reportText += `• ${acc.name}: USD ${acc.usd} | SYP ${acc.syp}\n`;
       });
       reportText += "\n";
 
-      // سجل العمليات
       reportText += "--- سجل العمليات التفصيلي ---\n";
       state.history.forEach((h, index) => {
         const date = h.date || 'غير محدد';
