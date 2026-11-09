@@ -33,66 +33,89 @@
     }
   </style>
 </head>
-<body class="min-h-screen bg-slate-950 text-slate-100 py-6 px-4">
+<body class="min-h-screen bg-slate-950 text-slate-100 py-5 px-3">
 
-  <div class="max-w-2xl mx-auto space-y-5">
+  <div class="max-w-xl mx-auto space-y-4">
 
     <!-- شريط العنوان وزر الانتقال للإعدادات -->
     <div class="flex items-center justify-between">
-      <h1 class="text-lg font-extrabold text-white">لوحة الأرصدة والحسابات</h1>
-      <a href="settings.html" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 flex items-center gap-2 transition">
+      <h1 class="text-base font-extrabold text-white">لوحة الأرصدة والحسابات</h1>
+      <a href="settings.html" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1.5 transition">
         <span>⚙️</span>
-        <span>الإعدادات والحسابات</span>
+        <span>الإعدادات</span>
       </a>
     </div>
 
-    <!-- 1. خانة قيمة الرصيد الكلي (في البداية تماماً) -->
-    <section class="bg-gradient-to-br from-slate-900 to-slate-900/90 border-2 border-emerald-500/40 rounded-2xl p-5 shadow-xl">
-      <div class="flex items-center justify-between mb-3">
-        <span class="text-sm font-bold text-slate-300">قيمة الرصيد الكلي (للحسابات المفعلة)</span>
-        <span id="activeAccountsBadge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">0 حسابات مفعلة</span>
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-        <div class="bg-slate-950/90 border border-emerald-500/30 rounded-xl p-4 flex items-center justify-between">
-          <div>
-            <span class="text-xs text-slate-400 block mb-1">الإجمالي بالدولار</span>
-            <span id="totalUsdDisplay" class="text-2xl sm:text-3xl font-extrabold text-emerald-400 num-font">$0</span>
+    <!-- 1. لوحة الملخص المدمجة بالأعلى -->
+    <section class="bg-gradient-to-br from-slate-900 to-slate-950 border border-emerald-500/40 rounded-2xl p-4 shadow-xl space-y-3">
+      
+      <!-- الرصيد الكلي -->
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <span class="text-[11px] font-bold text-slate-400 block">الرصيد الكلي المجمع</span>
+          <div class="flex items-center gap-3 mt-0.5">
+            <span id="totalUsdDisplay" class="text-xl sm:text-2xl font-extrabold text-emerald-400 num-font">$0</span>
+            <span class="text-slate-600">|</span>
+            <span id="totalSypDisplay" class="text-lg sm:text-xl font-extrabold text-amber-400 num-font">0 SYP</span>
           </div>
-          <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 font-bold text-xs num-font">USD</span>
         </div>
-        <div class="bg-slate-950/90 border border-amber-500/30 rounded-xl p-4 flex items-center justify-between">
+        <span id="activeAccountsBadge" class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">0 حسابات</span>
+      </div>
+
+      <!-- تفاصيل أرصدة الحسابات المفعلة -->
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between text-[11px] text-slate-400 px-1">
+          <span>أرصدة الحسابات</span>
+          <a href="settings.html" class="text-emerald-400 hover:underline">إدارة</a>
+        </div>
+        <div id="activeAccountsList" class="grid grid-cols-1 gap-1.5"></div>
+      </div>
+
+      <!-- إجمالي الإيداعات والسحوبات الكلية -->
+      <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80">
+        <div class="bg-slate-950/70 border border-emerald-500/20 rounded-xl p-2.5 flex items-center justify-between">
           <div>
-            <span class="text-xs text-slate-400 block mb-1">الإجمالي بالليرة السورية</span>
-            <span id="totalSypDisplay" class="text-2xl sm:text-3xl font-extrabold text-amber-400 num-font">0 SYP</span>
+            <span class="text-[10px] text-slate-400 block">إجمالي الوارد</span>
+            <span id="allTimeTotalDepositsUsd" class="text-xs font-extrabold text-emerald-400 num-font block">$0</span>
+            <span id="allTimeTotalDepositsSyp" class="text-[10px] font-bold text-emerald-300 num-font block">0 SYP</span>
           </div>
-          <span class="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-400 font-bold text-xs">ل.س</span>
+          <span class="text-xs">➕</span>
+        </div>
+        <div class="bg-slate-950/70 border border-rose-500/20 rounded-xl p-2.5 flex items-center justify-between">
+          <div>
+            <span class="text-[10px] text-slate-400 block">إجمالي الصادر</span>
+            <span id="allTimeTotalWithdrawsUsd" class="text-xs font-extrabold text-rose-400 num-font block">$0</span>
+            <span id="allTimeTotalWithdrawsSyp" class="text-[10px] font-bold text-rose-300 num-font block">0 SYP</span>
+          </div>
+          <span class="text-xs">➖</span>
         </div>
       </div>
+
     </section>
 
-    <!-- 2. خانة العمليات المبسطة (إيداع، سحب، نقل - صارت تحت الرصيد مباشرة) -->
+    <!-- 2. خانة العمليات السريعة -->
     <section class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
-      <div class="grid grid-cols-3 bg-slate-950/70 p-1.5 gap-1.5 border-b border-slate-800">
-        <button id="modeDepositBtn" type="button" class="py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold transition bg-emerald-600 text-white shadow">
+      <div class="grid grid-cols-3 bg-slate-950/70 p-1 gap-1 border-b border-slate-800">
+        <button id="modeDepositBtn" type="button" class="py-2 px-1 rounded-xl text-xs font-bold transition bg-emerald-600 text-white shadow">
           ➕ إيداع
         </button>
-        <button id="modeWithdrawBtn" type="button" class="py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold transition text-slate-400 hover:text-white hover:bg-slate-800">
+        <button id="modeWithdrawBtn" type="button" class="py-2 px-1 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800">
           ➖ سحب
         </button>
-        <button id="modeTransferBtn" type="button" class="py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold transition text-slate-400 hover:text-white hover:bg-slate-800">
-          🔄 نقل بين حساباتي
+        <button id="modeTransferBtn" type="button" class="py-2 px-1 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800">
+          🔄 نقل
         </button>
       </div>
 
-      <form id="operationForm" class="p-5 space-y-4">
-        <div class="grid grid-cols-3 gap-3">
+      <form id="operationForm" class="p-4 space-y-3">
+        <div class="grid grid-cols-3 gap-2.5">
           <div class="col-span-2">
-            <label for="opAmount" class="block text-xs font-bold text-slate-300 mb-1.5">المبلغ</label>
-            <input id="opAmount" type="number" step="any" min="0.01" required placeholder="0.00" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:outline-none px-3.5 py-2.5 text-lg font-extrabold text-white num-font" />
+            <label for="opAmount" class="block text-[11px] font-bold text-slate-300 mb-1">المبلغ</label>
+            <input id="opAmount" type="number" step="any" min="0.01" required placeholder="0.00" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:outline-none px-3 py-2 text-base font-extrabold text-white num-font" />
           </div>
           <div>
-            <label for="opCurrency" class="block text-xs font-bold text-slate-300 mb-1.5">العملة</label>
-            <select id="opCurrency" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:outline-none px-3 py-2.5 text-sm font-bold text-emerald-400 h-[46px]">
+            <label for="opCurrency" class="block text-[11px] font-bold text-slate-300 mb-1">العملة</label>
+            <select id="opCurrency" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:outline-none px-2.5 py-2 text-xs font-bold text-emerald-400 h-[42px]">
               <option value="USD" selected>دولار ($)</option>
               <option value="SYP">سوري (ل.س)</option>
             </select>
@@ -100,78 +123,44 @@
         </div>
 
         <div id="singleAccountBox">
-          <label id="singleAccountLabel" for="opAccount" class="block text-xs font-bold text-slate-300 mb-1.5">الحساب</label>
-          <select id="opAccount" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:outline-none px-3.5 py-2.5 text-sm font-semibold text-white"></select>
+          <label id="singleAccountLabel" for="opAccount" class="block text-[11px] font-bold text-slate-300 mb-1">الحساب</label>
+          <select id="opAccount" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:outline-none px-3 py-2 text-xs font-semibold text-white"></select>
         </div>
 
-        <div id="transferAccountsBox" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div id="transferAccountsBox" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div>
-            <label for="fromAccount" class="block text-xs font-bold text-slate-300 mb-1.5">من حساب (سحب)</label>
-            <select id="fromAccount" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-sky-500 focus:outline-none px-3.5 py-2.5 text-sm font-semibold text-white"></select>
+            <label for="fromAccount" class="block text-[11px] font-bold text-slate-300 mb-1">من حساب</label>
+            <select id="fromAccount" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-sky-500 focus:outline-none px-3 py-2 text-xs font-semibold text-white"></select>
           </div>
           <div>
-            <label for="toAccount" class="block text-xs font-bold text-slate-300 mb-1.5">إلى حساب (إيداع)</label>
-            <select id="toAccount" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-sky-500 focus:outline-none px-3.5 py-2.5 text-sm font-semibold text-white"></select>
+            <label for="toAccount" class="block text-[11px] font-bold text-slate-300 mb-1">إلى حساب</label>
+            <select id="toAccount" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-sky-500 focus:outline-none px-3 py-2 text-xs font-semibold text-white"></select>
           </div>
         </div>
 
-        <button id="submitOpBtn" type="submit" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg transition">
+        <button id="submitOpBtn" type="submit" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition">
           تأكيد الإيداع وتحديث الرصيد
         </button>
       </form>
     </section>
 
-    <!-- 3. خانات أرصدة الحسابات المفعلة -->
-    <section class="space-y-2.5">
-      <div class="flex items-center justify-between px-1">
-        <h2 class="text-xs font-bold text-slate-400">أرصدة الحسابات المفعلة</h2>
-        <a href="settings.html" class="text-xs text-emerald-400 hover:underline font-semibold">إدارة الحسابات</a>
-      </div>
-      <div id="activeAccountsList" class="space-y-2.5"></div>
-    </section>
-
-    <!-- 4. إجمالي الإيداعات والسحوبات الكلية -->
-    <section class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      <div class="bg-slate-900 border border-emerald-500/30 rounded-2xl p-4 flex items-center justify-between shadow">
-        <div>
-          <span class="text-xs text-slate-400 block mb-1">إجمالي الإيداعات الكلية</span>
-          <div class="space-y-0.5">
-            <span id="allTimeTotalDepositsUsd" class="text-base font-extrabold text-emerald-400 num-font block">$0</span>
-            <span id="allTimeTotalDepositsSyp" class="text-xs font-bold text-emerald-300 num-font block">0 SYP</span>
-          </div>
-        </div>
-        <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 font-bold text-xs">➕ وارد</span>
-      </div>
-
-      <div class="bg-slate-900 border border-rose-500/30 rounded-2xl p-4 flex items-center justify-between shadow">
-        <div>
-          <span class="text-xs text-slate-400 block mb-1">إجمالي السحوبات الكلية</span>
-          <div class="space-y-0.5">
-            <span id="allTimeTotalWithdrawsUsd" class="text-base font-extrabold text-rose-400 num-font block">$0</span>
-            <span id="allTimeTotalWithdrawsSyp" class="text-xs font-bold text-rose-300 num-font block">0 SYP</span>
-          </div>
-        </div>
-        <span class="px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-400 font-bold text-xs">➖ صادر</span>
-      </div>
-    </section>
-
-    <!-- 5. سجل العمليات والملخص اليومي -->
-    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-lg">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-2.5 flex-wrap gap-2">
+    <!-- 3. سجل العمليات والملخص اليومي -->
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-2.5 shadow-lg">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2 flex-wrap gap-2">
         <h2 class="text-xs font-bold text-slate-200">📜 السجل والملخص اليومي</h2>
-        <div class="flex items-center gap-2">
-          <button id="exportReportBtn" type="button" class="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-[11px] font-bold text-white transition flex items-center gap-1.5">
-            <span>📥</span> تصدير التقرير
+        <div class="flex items-center gap-1.5">
+          <button id="exportReportBtn" type="button" class="px-2.5 py-1 rounded-lg bg-sky-600 hover:bg-sky-500 text-[10px] font-bold text-white transition">
+            📥 تصدير
           </button>
-          <button id="clearHistoryBtn" type="button" class="text-[11px] text-slate-400 hover:text-rose-400 transition">مسح السجل</button>
+          <button id="clearHistoryBtn" type="button" class="text-[10px] text-slate-400 hover:text-rose-400 transition">مسح</button>
         </div>
       </div>
-      <div id="historyList" class="space-y-3 max-h-96 overflow-y-auto"></div>
+      <div id="historyList" class="space-y-2.5 max-h-64 overflow-y-auto"></div>
     </section>
 
   </div>
 
-  <div id="toastBox" class="fixed bottom-4 left-4 z-50 hidden px-4 py-2.5 rounded-xl bg-slate-800 border border-emerald-500/40 text-white text-xs font-bold shadow-xl">
+  <div id="toastBox" class="fixed bottom-4 left-4 z-50 hidden px-3 py-2 rounded-xl bg-slate-800 border border-emerald-500/40 text-white text-xs font-bold shadow-xl">
     <span id="toastText">تم التحديث</span>
   </div>
 
@@ -303,7 +292,7 @@
 
       document.getElementById('totalUsdDisplay').textContent = formatUsd(totalUsd);
       document.getElementById('totalSypDisplay').textContent = formatSyp(totalSyp);
-      document.getElementById('activeAccountsBadge').textContent = `${activeAccs.length} حسابات مفعلة`;
+      document.getElementById('activeAccountsBadge').textContent = `${activeAccs.length} حسابات`;
 
       let depUsd = 0, depSyp = 0, wdUsd = 0, wdSyp = 0;
       (state.history || []).forEach(h => {
@@ -324,27 +313,22 @@
       list.innerHTML = '';
 
       if (activeAccs.length === 0) {
-        list.innerHTML = `<div class="bg-slate-900/70 border border-dashed border-slate-800 rounded-xl p-3 text-center text-xs text-slate-400">لا توجد حسابات مفعلة. قم بتفعيلها من صفحة الإعدادات ⚙️.</div>`;
+        list.innerHTML = `<div class="bg-slate-950/70 border border-dashed border-slate-800 rounded-xl p-2 text-center text-[11px] text-slate-400">لا توجد حسابات مفعلة.</div>`;
         return;
       }
 
       activeAccs.forEach(acc => {
         const row = document.createElement('div');
-        row.className = 'bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 flex items-center justify-between gap-3 shadow-sm';
+        row.className = 'bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 flex items-center justify-between gap-2';
         row.innerHTML = `
-          <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span class="text-sm font-bold text-white">${escapeHtml(acc.name)}</span>
+          <div class="flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span class="text-xs font-bold text-white">${escapeHtml(acc.name)}</span>
           </div>
-          <div class="flex items-center gap-3">
-            <div class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1 text-left">
-              <span class="text-[10px] text-slate-400 block">دولار</span>
-              <span class="text-sm font-extrabold text-emerald-400 num-font">${formatUsd(acc.usd)}</span>
-            </div>
-            <div class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1 text-left">
-              <span class="text-[10px] text-slate-400 block">ليرة سورية</span>
-              <span class="text-sm font-extrabold text-amber-400 num-font">${formatSyp(acc.syp)}</span>
-            </div>
+          <div class="flex items-center gap-2.5 text-xs">
+            <span class="font-extrabold text-emerald-400 num-font">${formatUsd(acc.usd)}</span>
+            <span class="text-slate-600">|</span>
+            <span class="font-extrabold text-amber-400 num-font">${formatSyp(acc.syp)}</span>
           </div>
         `;
         list.appendChild(row);
@@ -392,9 +376,12 @@
 
       const grouped = {};
       state.history.forEach(h => {
-        const dateStr = h.date || new Date(Number(h.id.replace('h_', '')) || Date.now()).toLocaleDateString('en-CA');
+        const ts = Number(h.id.replace('h_', '')) || Date.now();
+        const dateObj = new Date(ts);
+        const dateStr = h.date || dateObj.toLocaleDateString('en-CA');
+        
         if (!grouped[dateStr]) grouped[dateStr] = { items: [], depUsd: 0, depSyp: 0, wdUsd: 0, wdSyp: 0 };
-        grouped[dateStr].items.push(h);
+        grouped[dateStr].items.push({ ...h, timeStr: dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) });
 
         const amt = Number(h.amount) || 0;
         if (h.type === 'deposit') {
@@ -409,39 +396,40 @@
       sortedDates.forEach(date => {
         const group = grouped[date];
         const dayBox = document.createElement('div');
-        dayBox.className = 'space-y-2 bg-slate-950/60 border border-slate-800 rounded-xl p-3';
+        dayBox.className = 'space-y-2 bg-slate-950/60 border border-slate-800 rounded-xl p-2.5';
 
-        let daySummaryHtml = `<div class="flex items-center justify-between text-xs border-b border-slate-800 pb-2">
+        let daySummaryHtml = `<div class="flex items-center justify-between text-[11px] border-b border-slate-800 pb-1.5">
           <span class="font-extrabold text-sky-400">📅 ${date}</span>
-          <div class="flex items-center gap-2 text-[11px]">
-            <span class="text-emerald-400 font-bold">وارد: ${formatUsd(group.depUsd)} | ${formatSyp(group.depSyp)}</span>
-            <span class="text-rose-400 font-bold">صادر: ${formatUsd(group.wdUsd)} | ${formatSyp(group.wdSyp)}</span>
+          <div class="flex items-center gap-1.5 text-[10px]">
+            <span class="text-emerald-400 font-bold">وارد: ${formatUsd(group.depUsd)}</span>
+            <span class="text-rose-400 font-bold">صادر: ${formatUsd(group.wdUsd)}</span>
           </div>
         </div>`;
 
-        let itemsHtml = '<div class="space-y-1.5 pt-1">';
+        let itemsHtml = '<div class="space-y-1 pt-1">';
         group.items.forEach(h => {
           const amountStr = h.currency === 'USD' ? formatUsd(h.amount) : formatSyp(h.amount);
           let badge = '', desc = '';
           if (h.type === 'deposit') {
             badge = `<span class="text-emerald-400 font-bold">➕ إيداع</span>`;
-            desc = `إلى ${escapeHtml(h.accountName)}`;
+            desc = `${escapeHtml(h.accountName)}`;
           } else if (h.type === 'withdraw') {
             badge = `<span class="text-rose-400 font-bold">➖ سحب</span>`;
-            desc = `من ${escapeHtml(h.accountName)}`;
+            desc = `${escapeHtml(h.accountName)}`;
           } else {
             badge = `<span class="text-sky-400 font-bold">🔄 نقل</span>`;
-            desc = `من ${escapeHtml(h.fromName)} إلى ${escapeHtml(h.toName)}`;
+            desc = `${escapeHtml(h.fromName)} ⬅ ${escapeHtml(h.toName)}`;
           }
 
           itemsHtml += `
-            <div class="bg-slate-900 border border-slate-800/80 rounded-lg px-3 py-1.5 flex items-center justify-between text-xs">
+            <div class="bg-slate-900 border border-slate-800/80 rounded-lg px-2.5 py-1.5 flex items-center justify-between text-xs">
               <div class="flex items-center gap-2 flex-wrap">
                 ${badge}
                 <span class="font-extrabold text-white num-font">${amountStr}</span>
-                <span class="text-slate-400">${desc}</span>
+                <span class="text-slate-400 text-[11px]">(${desc})</span>
+                <span class="text-[10px] text-slate-500 num-font">⏱ ${h.timeStr}</span>
               </div>
-              <button type="button" data-undo-id="${h.id}" class="text-[11px] text-rose-400 hover:underline font-semibold">تراجع</button>
+              <button type="button" data-undo-id="${h.id}" class="text-[10px] text-rose-400 hover:underline font-semibold">تراجع</button>
             </div>
           `;
         });
@@ -462,26 +450,26 @@
       const singleLabel = document.getElementById('singleAccountLabel');
       const submitBtn = document.getElementById('submitOpBtn');
 
-      const baseClass = 'py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold transition text-slate-400 hover:text-white hover:bg-slate-800';
+      const baseClass = 'py-2 px-1 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800';
       depBtn.className = baseClass; wdBtn.className = baseClass; trBtn.className = baseClass;
 
       if (mode === 'deposit') {
-        depBtn.className = 'py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold transition bg-emerald-600 text-white shadow';
+        depBtn.className = 'py-2 px-1 rounded-xl text-xs font-bold transition bg-emerald-600 text-white shadow';
         singleBox.classList.remove('hidden'); transferBox.classList.add('hidden');
         singleLabel.textContent = 'إيداع في حساب';
         submitBtn.textContent = 'تأكيد الإيداع وتحديث الرصيد';
-        submitBtn.className = 'w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg transition';
+        submitBtn.className = 'w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition';
       } else if (mode === 'withdraw') {
-        wdBtn.className = 'py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold transition bg-rose-600 text-white shadow';
+        wdBtn.className = 'py-2 px-1 rounded-xl text-xs font-bold transition bg-rose-600 text-white shadow';
         singleBox.classList.remove('hidden'); transferBox.classList.add('hidden');
         singleLabel.textContent = 'سحب من حساب';
         submitBtn.textContent = 'تأكيد السحب وتحديث الرصيد';
-        submitBtn.className = 'w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm shadow-lg transition';
+        submitBtn.className = 'w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md transition';
       } else {
-        trBtn.className = 'py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold transition bg-sky-600 text-white shadow';
+        trBtn.className = 'py-2 px-1 rounded-xl text-xs font-bold transition bg-sky-600 text-white shadow';
         singleBox.classList.add('hidden'); transferBox.classList.remove('hidden');
         submitBtn.textContent = 'تأكيد النقل بين الحسابين';
-        submitBtn.className = 'w-full py-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-sm shadow-lg transition';
+        submitBtn.className = 'w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs shadow-md transition';
       }
     }
 
@@ -616,13 +604,17 @@
 
       reportText += "--- سجل العمليات التفصيلي ---\n";
       state.history.forEach((h, index) => {
-        const date = h.date || 'غير محدد';
+        const ts = Number(h.id.replace('h_', '')) || Date.now();
+        const dateObj = new Date(ts);
+        const date = h.date || dateObj.toLocaleDateString('en-CA');
+        const time = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+        
         if (h.type === 'deposit') {
-          reportText += `${index + 1}. [إيداع] بتاريخ ${date} - المبلغ: ${h.amount} ${h.currency} إلى الحساب: ${h.accountName}\n`;
+          reportText += `${index + 1}. [إيداع] بتاريخ ${date} الساعة ${time} - المبلغ: ${h.amount} ${h.currency} إلى الحساب: ${h.accountName}\n`;
         } else if (h.type === 'withdraw') {
-          reportText += `${index + 1}. [سحب] بتاريخ ${date} - المبلغ: ${h.amount} ${h.currency} من الحساب: ${h.accountName}\n`;
+          reportText += `${index + 1}. [سحب] بتاريخ ${date} الساعة ${time} - المبلغ: ${h.amount} ${h.currency} من الحساب: ${h.accountName}\n`;
         } else {
-          reportText += `${index + 1}. [نقل] بتاريخ ${date} - المبلغ: ${h.amount} ${h.currency} من ${h.fromName} إلى ${h.toName}\n`;
+          reportText += `${index + 1}. [نقل] بتاريخ ${date} الساعة ${time} - المبلغ: ${h.amount} ${h.currency} من ${h.fromName} إلى ${h.toName}\n`;
         }
       });
 
