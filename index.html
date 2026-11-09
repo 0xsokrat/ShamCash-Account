@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>إدارة الرصيد والحسابات</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Cairo', 'Inter', 'sans-serif'],
+            mono: ['Inter', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+    }
+    .num-font {
+      font-family: 'Inter', 'Cairo', sans-serif;
+      direction: ltr;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 py-6 px-4">
+
+  <div class="max-w-2xl mx-auto space-y-5">
+
+    <!-- شريط العنوان وزر الإعدادات -->
+    <div class="flex items-center justify-between">
+      <h1 class="text-lg font-extrabold text-white">لوحة الأرصدة والحسابات</h1>
+      <button id="toggleSettingsBtn" type="button" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 flex items-center gap-2 transition">
+        <span>⚙️</span>
+        <span>الإعدادات والحسابات</span>
+      </button>
+    </div>
+
+    <!-- 1. خانة قيمة الرصيد الكلي (بالأعلى وبحجم كبير وواضح) -->
+    <section class="bg-gradient-to-br from-slate-900 to-slate-900/90 border-2 border-emerald-500/40 rounded-2xl p-5 shadow-xl">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-sm font-bold text-slate-300">قيمة الرصيد الكلي (للحسابات المفعلة)</span>
+        <span id="activeAccountsBadge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">0 حسابات مفعلة</span>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        <div class="bg-slate-950/90 border border-emerald-500/30 rounded-xl p-4 flex items-center justify-between">
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">الإجمالي بالدولار</span>
+            <span id="totalUsdDisplay" class="text-2xl sm:text-3xl font-extrabold text-emerald-400 num-font">$0.00</span>
+          </div>
+          <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 font-bold text-xs num-font">USD</span>
+        </div>
+        <div class="bg-slate-950/90 border border-amber-500/30 rounded-xl p-4 flex items-center justify-between">
+          <div>
+            <span class="text-xs text-slate-400 block mb-1">الإجمالي بالليرة السورية</span>
+            <span id="totalSypDisplay" class="text-2xl sm:text-3xl font-extrabold text-amber-400 num-font">0 SYP</span>
+          </div>
+          <span class="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-400 font-bold text-xs">ل.س</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. خانات أرصدة الحسابات المفعلة (تحت الرصيد الكلي وبحجم أصغر بحسب عدد الحسابات المفعلة) -->
+    <section class="space-y-2.5">
+      <div class="flex items-center justify-between px-1">
+        <h2 class="text-xs font-bold text-slate-400">أرصدة الحسابات المفعلة</h2>
+        <button id="quickSettingsLink" type="button" class="text-xs text-emerald-400 hover:underline font-semibold">تعديل الأسماء أو إضافة حساب</button>
+      </div>
+      <div id="activeAccountsList" class="space-y-2.5">
+        <!-- يتم عرض خانة لكل حساب مفعل هنا بحجم أصغر -->
+      </div>
+    </section>
+
+    <!-- 3. خانة العمليات المبسطة: إيداع | سحب | نقل بين حساباتي -->
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
+      <!-- أزرار اختيار نوع العملية -->
+      <div class="grid grid-cols-3 bg-slate-950/70 p-1.5 gap-1.5 border-b border-slate-800">
+        <button id="modeDepositBtn" type="button" class="py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold transition bg-emerald-600 text-white shadow">
+          ➕ إيداع
+        </button>
+        <button id="modeWithdrawBtn" type="button" class="py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold transition text-slate-400 hover:text-white hover:bg-slate-800">
+          ➖ سحب
+        </button>
+        <button id="modeTransferBtn" type="button" class="py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold transition text-slate-400 hover:text-white hover:bg-slate-800">
+          🔄 نقل بين حساباتي
+        </button>
+      </div>
+
+      <!-- نموذج الإيداع / السحب / النقل بدون أي حقول إضافية -->
+      <form id="operationForm" class="p-5 space-y-4">
+        <!-- المبلغ والعملة (الافتراضية دولار) -->
+        <div class="grid grid-cols-3 gap-3">
+          <div class="col-span-2">
+            <label for="opAmount" class="block text-xs font-bold text-slate-300 mb-1.5">المبلغ</label>
+            <input id="opAmount" type="number" step="any" min="0.01" required placeholder="0.00" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:outline-none px-3.5 py-2.5 text-lg font-extrabold text-white num-font" />
+          </div>
+          <div>
+            <label for="opCurrency" class="block text-xs font-bold text-slate-300 mb-1.5">العملة</label>
+            <select id="opCurrency" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:outline-none px-3 py-2.5 text-sm font-bold text-emerald-400 h-[46px]">
+              <option value="USD" selected>دولار ($)</option>
+              <option value="SYP">سوري (ل.س)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- اختيار الحساب (لعمليات الإيداع أو السحب) -->
+        <div id="singleAccountBox">
+          <label id="singleAccountLabel" for="opAccount" class="block text-xs font-bold text-slate-300 mb-1.5">الحساب</label>
+          <select id="opAccount" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:outline-none px-3.5 py-2.5 text-sm font-semibold text-white">
+            <!-- الحسابات المفعلة -->
+          </select>
+        </div>
+
+        <!-- اختيار من حساب إلى حساب (لعملية النقل بين الحسابات) -->
+        <div id="transferAccountsBox" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="fromAccount" class="block text-xs font-bold text-slate-300 mb-1.5">من حساب (سحب)</label>
+            <select id="fromAccount" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-sky-500 focus:outline-none px-3.5 py-2.5 text-sm font-semibold text-white">
+            </select>
+          </div>
+          <div>
+            <label for="toAccount" class="block text-xs font-bold text-slate-300 mb-1.5">إلى حساب (إيداع)</label>
+            <select id="toAccount" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-sky-500 focus:outline-none px-3.5 py-2.5 text-sm font-semibold text-white">
+            </select>
+          </div>
+        </div>
+
+        <button id="submitOpBtn" type="submit" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg transition">
+          تأكيد الإيداع وتحديث الرصيد
+        </button>
+      </form>
+    </section>
+
+    <!-- 4. قسم الإعدادات (إضافة وتسمية الحسابات وتفعيلها أو تعديل رصيدها) -->
+    <section id="settingsSection" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-lg">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-sm font-bold text-white">⚙️ قسم الإعدادات (إدارة الحسابات)</h2>
+          <p class="text-[11px] text-slate-400">سمِّ حساباتك، فعّل أو أوقف أي حساب، أو عدّل الرصيد الابتدائي يدوياً</p>
+        </div>
+      </div>
+
+      <!-- قائمة جميع الحسابات في الإعدادات -->
+      <div id="settingsAccountsList" class="space-y-2.5">
+        <!-- يتم ملؤها ديناميكياً -->
+      </div>
+
+      <!-- نموذج إضافة حساب جديد في الإعدادات -->
+      <form id="addAccountForm" class="pt-3 border-t border-slate-800 space-y-3">
+        <h3 class="text-xs font-bold text-emerald-400">+ إضافة حساب جديد</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <div>
+            <label for="newAccName" class="block text-[11px] text-slate-400 mb-1">اسم الحساب</label>
+            <input id="newAccName" type="text" required placeholder="مثال: حساب 3" class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white" />
+          </div>
+          <div>
+            <label for="newAccUsd" class="block text-[11px] text-slate-400 mb-1">رصيد الدولار ($)</label>
+            <input id="newAccUsd" type="number" step="any" value="0" class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-xs font-bold text-emerald-400 num-font" />
+          </div>
+          <div>
+            <label for="newAccSyp" class="block text-[11px] text-slate-400 mb-1">رصيد السوري (ل.س)</label>
+            <input id="newAccSyp" type="number" step="any" value="0" class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-xs font-bold text-amber-400 num-font" />
+          </div>
+        </div>
+        <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white transition">
+          إضافة وتفعيل الحساب
+        </button>
+      </form>
+    </section>
+
+    <!-- 5. سجل آخر الحركات المختصر (للتراجع عند الخطأ فقط) -->
+    <section class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 space-y-2.5">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xs font-bold text-slate-400">آخر العمليات المنفذة</h2>
+        <button id="clearHistoryBtn" type="button" class="text-[11px] text-slate-400 hover:text-rose-400 transition">مسح السجل</button>
+      </div>
+      <div id="historyList" class="space-y-1.5 max-h-48 overflow-y-auto">
+        <!-- سجل مختصر جداً -->
+      </div>
+    </section>
+
+  </div>
+
+  <!-- إشعار Toast -->
+  <div id="toastBox" class="fixed bottom-4 left-4 z-50 hidden px-4 py-2.5 rounded-xl bg-slate-800 border border-emerald-500/40 text-white text-xs font-bold shadow-xl">
+    <span id="toastText">تم التحديث</span>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'simple_balance_mediator_v2';
+
+    const defaultState = {
+      accounts: [
+        { id: 'acc_1', name: 'حساب 1', usd: 1500, syp: 10000000, active: true },
+        { id: 'acc_2', name: 'حساب 2', usd: 500, syp: 5000000, active: true }
+      ],
+      history: []
+    };
+
+    let state = loadState();
+    let currentMode = 'deposit'; // 'deposit' | 'withdraw' | 'transfer'
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.accounts)) {
+            return parsed;
+          }
+        }
+      } catch (e) {}
+      return JSON.parse(JSON.stringify(defaultState));
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {}
+    }
+
+    function showToast(msg) {
+      const box = document.getElementById('toastBox');
+      document.getElementById('toastText').textContent = msg;
+      box.classList.remove('hidden');
+      if (window._toastTimer) clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => box.classList.add('hidden'), 2500);
+    }
+
+    function formatUsd(val) {
+      const n = Number(val) || 0;
+      return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatSyp(val) {
+      const n = Number(val) || 0;
+      return n.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' SYP';
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function getActiveAccounts() {
+      return state.accounts.filter(a => a.active);
+    }
+
+    function renderAll() {
+      renderTopAndActiveAccounts();
+      renderAccountSelects();
+      renderSettingsAccounts();
+      renderHistory();
+    }
+
+    // عرض الرصيد الكلي وتحته خانات الحسابات المفعلة بحجم أصغر
+    function renderTopAndActiveAccounts() {
+      const activeAccs = getActiveAccounts();
+      let totalUsd = 0;
+      let totalSyp = 0;
+
+      activeAccs.forEach(a => {
+        totalUsd += Number(a.usd) || 0;
+        totalSyp += Number(a.syp) || 0;
+      });
+
+      document.getElementById('totalUsdDisplay').textContent = formatUsd(totalUsd);
+      document.getElementById('totalSypDisplay').textContent = formatSyp(totalSyp);
+      document.getElementById('activeAccountsBadge').textContent = `${activeAccs.length} حسابات مفعلة`;
+
+      const list = document.getElementById('activeAccountsList');
+      list.innerHTML = '';
+
+      if (activeAccs.length === 0) {
+        list.innerHTML = `
+          <div class="bg-slate-900/70 border border-dashed border-slate-800 rounded-xl p-3 text-center text-xs text-slate-400">
+            لا توجد حسابات مفعلة حالياً. قم بتفعيل أو إضافة حساب من قسم الإعدادات بالأسفل.
+          </div>
+        `;
+        return;
+      }
+
+      activeAccs.forEach(acc => {
+        const row = document.createElement('div');
+        row.className = 'bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 flex items-center justify-between gap-3 shadow-sm';
+        row.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span class="text-sm font-bold text-white">${escapeHtml(acc.name)}</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1 text-left">
+              <span class="text-[10px] text-slate-400 block">دولار</span>
+              <span class="text-sm font-extrabold text-emerald-400 num-font">${formatUsd(acc.usd)}</span>
+            </div>
+            <div class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1 text-left">
+              <span class="text-[10px] text-slate-400 block">ليرة سورية</span>
+              <span class="text-sm font-extrabold text-amber-400 num-font">${formatSyp(acc.syp)}</span>
+            </div>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    function renderAccountSelects() {
+      const activeAccs = getActiveAccounts();
+      const opSel = document.getElementById('opAccount');
+      const fromSel = document.getElementById('fromAccount');
+      const toSel = document.getElementById('toAccount');
+
+      const prevOp = opSel.value;
+      const prevFrom = fromSel.value;
+      const prevTo = toSel.value;
+
+      opSel.innerHTML = '';
+      fromSel.innerHTML = '';
+      toSel.innerHTML = '';
+
+      activeAccs.forEach(acc => {
+        const label = `${acc.name} (${formatUsd(acc.usd)} | ${formatSyp(acc.syp)})`;
+
+        const o1 = document.createElement('option');
+        o1.value = acc.id;
+        o1.textContent = label;
+        opSel.appendChild(o1);
+
+        const o2 = document.createElement('option');
+        o2.value = acc.id;
+        o2.textContent = label;
+        fromSel.appendChild(o2);
+
+        const o3 = document.createElement('option');
+        o3.value = acc.id;
+        o3.textContent = label;
+        toSel.appendChild(o3);
+      });
+
+      if (prevOp && activeAccs.some(a => a.id === prevOp)) opSel.value = prevOp;
+      if (prevFrom && activeAccs.some(a => a.id === prevFrom)) fromSel.value = prevFrom;
+      if (prevTo && activeAccs.some(a => a.id === prevTo)) {
+        toSel.value = prevTo;
+      } else if (activeAccs.length > 1) {
+        toSel.value = activeAccs[1].id;
+      }
+    }
+
+    function renderSettingsAccounts() {
+      const container = document.getElementById('settingsAccountsList');
+      container.innerHTML = '';
+
+      state.accounts.forEach((acc, idx) => {
+        const item = document.createElement('div');
+        item.className = 'bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2.5';
+        item.innerHTML = `
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+            <div class="sm:col-span-4">
+              <label class="block text-[10px] text-slate-400 mb-0.5">اسم الحساب #${idx + 1}</label>
+              <input type="text" data-field="name" data-id="${acc.id}" value="${escapeHtml(acc.name)}" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs font-bold text-white" />
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block text-[10px] text-slate-400 mb-0.5">رصيد الدولار ($)</label>
+              <input type="number" step="any" data-field="usd" data-id="${acc.id}" value="${acc.usd}" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs font-bold text-emerald-400 num-font" />
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block text-[10px] text-slate-400 mb-0.5">رصيد السوري (ل.س)</label>
+              <input type="number" step="any" data-field="syp" data-id="${acc.id}" value="${acc.syp}" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-xs font-bold text-amber-400 num-font" />
+            </div>
+            <div class="sm:col-span-2 flex items-center justify-end gap-1.5 pt-3 sm:pt-4">
+              <button type="button" data-acc-action="toggle" data-id="${acc.id}" class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition ${acc.active ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800 text-slate-400 border border-slate-700'}">
+                ${acc.active ? 'مفعّل ✓' : 'موقوف'}
+              </button>
+              ${state.accounts.length > 1 ? `
+                <button type="button" data-acc-action="delete" data-id="${acc.id}" class="px-2 py-1.5 rounded-lg bg-slate-900 hover:bg-rose-950 text-rose-400 text-xs transition" title="حذف">
+                  🗑️
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function renderHistory() {
+      const list = document.getElementById('historyList');
+      list.innerHTML = '';
+
+      if (!state.history || state.history.length === 0) {
+        list.innerHTML = `<div class="text-[11px] text-slate-500 text-center py-2">لا توجد عمليات مسجلة بعد</div>`;
+        return;
+      }
+
+      state.history.slice(0, 15).forEach(h => {
+        const row = document.createElement('div');
+        row.className = 'bg-slate-950/80 border border-slate-800/80 rounded-lg px-3 py-1.5 flex items-center justify-between text-xs';
+        const amountStr = h.currency === 'USD' ? formatUsd(h.amount) : formatSyp(h.amount);
+        let badge = '';
+        let desc = '';
+
+        if (h.type === 'deposit') {
+          badge = `<span class="text-emerald-400 font-bold">➕ إيداع</span>`;
+          desc = `إلى ${escapeHtml(h.accountName)}`;
+        } else if (h.type === 'withdraw') {
+          badge = `<span class="text-rose-400 font-bold">➖ سحب</span>`;
+          desc = `من ${escapeHtml(h.accountName)}`;
+        } else {
+          badge = `<span class="text-sky-400 font-bold">🔄 نقل</span>`;
+          desc = `من ${escapeHtml(h.fromName)} إلى ${escapeHtml(h.toName)}`;
+        }
+
+        row.innerHTML = `
+          <div class="flex items-center gap-2 flex-wrap">
+            ${badge}
+            <span class="font-extrabold text-white num-font">${amountStr}</span>
+            <span class="text-slate-400">${desc}</span>
+          </div>
+          <button type="button" data-undo-id="${h.id}" class="text-[11px] text-rose-400 hover:underline font-semibold">تراجع</button>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    // تبديل وضع العملية (إيداع / سحب / نقل)
+    function setMode(mode) {
+      currentMode = mode;
+      const depBtn = document.getElementById('modeDepositBtn');
+      const wdBtn = document.getElementById('modeWithdrawBtn');
+      const trBtn = document.getElementById('modeTransferBtn');
+      const singleBox = document.getElementById('singleAccountBox');
+      const transferBox = document.getElementById('transferAccountsBox');
+      const singleLabel = document.getElementById('singleAccountLabel');
+      const submitBtn = document.getElementById('submitOpBtn');
+
+      const baseClass = 'py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold transition text-slate-400 hover:text-white hover:bg-slate-800';
+      depBtn.className = baseClass;
+      wdBtn.className = baseClass;
+      trBtn.className = baseClass;
+
+      if (mode === 'deposit') {
+        depBtn.className = 'py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold transition bg-emerald-600 text-white shadow';
+        singleBox.classList.remove('hidden');
+        transferBox.classList.add('hidden');
+        singleLabel.textContent = 'إيداع في حساب';
+        submitBtn.textContent = 'تأكيد الإيداع وتحديث الرصيد';
+        submitBtn.className = 'w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg transition';
+      } else if (mode === 'withdraw') {
+        wdBtn.className = 'py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold transition bg-rose-600 text-white shadow';
+        singleBox.classList.remove('hidden');
+        transferBox.classList.add('hidden');
+        singleLabel.textContent = 'سحب من حساب';
+        submitBtn.textContent = 'تأكيد السحب وتحديث الرصيد';
+        submitBtn.className = 'w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm shadow-lg transition';
+      } else {
+        trBtn.className = 'py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold transition bg-sky-600 text-white shadow';
+        singleBox.classList.add('hidden');
+        transferBox.classList.remove('hidden');
+        submitBtn.textContent = 'تأكيد النقل بين الحسابين';
+        submitBtn.className = 'w-full py-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-sm shadow-lg transition';
+      }
+    }
+
+    document.getElementById('modeDepositBtn').addEventListener('click', () => setMode('deposit'));
+    document.getElementById('modeWithdrawBtn').addEventListener('click', () => setMode('withdraw'));
+    document.getElementById('modeTransferBtn').addEventListener('click', () => setMode('transfer'));
+
+    // تنفيذ العملية
+    document.getElementById('operationForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const amount = parseFloat(document.getElementById('opAmount').value);
+      const currency = document.getElementById('opCurrency').value;
+
+      if (!amount || amount <= 0) return;
+
+      if (currentMode === 'deposit' || currentMode === 'withdraw') {
+        const accId = document.getElementById('opAccount').value;
+        const acc = state.accounts.find(a => a.id === accId);
+        if (!acc) return;
+
+        const delta = currentMode === 'deposit' ? amount : -amount;
+        if (currency === 'USD') {
+          acc.usd = Number((Number(acc.usd || 0) + delta).toFixed(2));
+        } else {
+          acc.syp = Math.round(Number(acc.syp || 0) + delta);
+        }
+
+        state.history.unshift({
+          id: 'h_' + Date.now(),
+          type: currentMode,
+          amount,
+          currency,
+          accountId: acc.id,
+          accountName: acc.name
+        });
+
+        showToast(currentMode === 'deposit' ? 'تمت إضافة المبلغ للرصيد' : 'تم خصم المبلغ من الرصيد');
+      } else if (currentMode === 'transfer') {
+        const fromId = document.getElementById('fromAccount').value;
+        const toId = document.getElementById('toAccount').value;
+        if (!fromId || !toId || fromId === toId) {
+          showToast('يرجى اختيار حسابين مختلفين للنقل بينهما');
+          return;
+        }
+
+        const fromAcc = state.accounts.find(a => a.id === fromId);
+        const toAcc = state.accounts.find(a => a.id === toId);
+        if (!fromAcc || !toAcc) return;
+
+        if (currency === 'USD') {
+          fromAcc.usd = Number((Number(fromAcc.usd || 0) - amount).toFixed(2));
+          toAcc.usd = Number((Number(toAcc.usd || 0) + amount).toFixed(2));
+        } else {
+          fromAcc.syp = Math.round(Number(fromAcc.syp || 0) - amount);
+          toAcc.syp = Math.round(Number(toAcc.syp || 0) + amount);
+        }
+
+        state.history.unshift({
+          id: 'h_' + Date.now(),
+          type: 'transfer',
+          amount,
+          currency,
+          fromId: fromAcc.id,
+          fromName: fromAcc.name,
+          toId: toAcc.id,
+          toName: toAcc.name
+        });
+
+        showToast(`تم نقل المبلغ من ${fromAcc.name} إلى ${toAcc.name}`);
+      }
+
+      saveState();
+      renderAll();
+      document.getElementById('opAmount').value = '';
+      document.getElementById('opCurrency').value = 'USD';
+    });
+
+    // التعديل الفوري في قسم الإعدادات (الاسم أو الرصيد)
+    document.getElementById('settingsAccountsList').addEventListener('change', e => {
+      const input = e.target.closest('input[data-field]');
+      if (!input) return;
+      const id = input.getAttribute('data-id');
+      const field = input.getAttribute('data-field');
+      const acc = state.accounts.find(a => a.id === id);
+      if (!acc) return;
+
+      if (field === 'name') {
+        const val = input.value.trim();
+        if (val) acc.name = val;
+      } else if (field === 'usd') {
+        acc.usd = parseFloat(input.value) || 0;
+      } else if (field === 'syp') {
+        acc.syp = parseFloat(input.value) || 0;
+      }
+
+      saveState();
+      renderAll();
+      showToast('تم حفظ تعديل الحساب');
+    });
+
+    // تفعيل / إيقاف أو حذف حساب في قسم الإعدادات
+    document.getElementById('settingsAccountsList').addEventListener('click', e => {
+      const btn = e.target.closest('button[data-acc-action]');
+      if (!btn) return;
+      const action = btn.getAttribute('data-acc-action');
+      const id = btn.getAttribute('data-id');
+      const acc = state.accounts.find(a => a.id === id);
+      if (!acc) return;
+
+      if (action === 'toggle') {
+        acc.active = !acc.active;
+        saveState();
+        renderAll();
+        showToast(acc.active ? `تم تفعيل ${acc.name}` : `تم إيقاف ${acc.name}`);
+      } else if (action === 'delete') {
+        if (state.accounts.length <= 1) return;
+        state.accounts = state.accounts.filter(a => a.id !== id);
+        saveState();
+        renderAll();
+        showToast('تم حذف الحساب');
+      }
+    });
+
+    // إضافة حساب جديد
+    document.getElementById('addAccountForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const name = document.getElementById('newAccName').value.trim();
+      const usd = parseFloat(document.getElementById('newAccUsd').value) || 0;
+      const syp = parseFloat(document.getElementById('newAccSyp').value) || 0;
+      if (!name) return;
+
+      state.accounts.push({
+        id: 'acc_' + Date.now(),
+        name,
+        usd,
+        syp,
+        active: true
+      });
+
+      saveState();
+      renderAll();
+      document.getElementById('newAccName').value = '';
+      document.getElementById('newAccUsd').value = '0';
+      document.getElementById('newAccSyp').value = '0';
+      showToast('تمت إضافة الحساب وتفعيله');
+    });
+
+    // التراجع عن عملية
+    document.getElementById('historyList').addEventListener('click', e => {
+      const btn = e.target.closest('button[data-undo-id]');
+      if (!btn) return;
+      const id = btn.getAttribute('data-undo-id');
+      const item = state.history.find(h => h.id === id);
+      if (!item) return;
+
+      if (item.type === 'deposit' || item.type === 'withdraw') {
+        const acc = state.accounts.find(a => a.id === item.accountId);
+        if (acc) {
+          const reverseDelta = item.type === 'deposit' ? -item.amount : item.amount;
+          if (item.currency === 'USD') {
+            acc.usd = Number((Number(acc.usd || 0) + reverseDelta).toFixed(2));
+          } else {
+            acc.syp = Math.round(Number(acc.syp || 0) + reverseDelta);
+          }
+        }
+      } else if (item.type === 'transfer') {
+        const fromAcc = state.accounts.find(a => a.id === item.fromId);
+        const toAcc = state.accounts.find(a => a.id === item.toId);
+        if (fromAcc) {
+          if (item.currency === 'USD') fromAcc.usd = Number((Number(fromAcc.usd || 0) + item.amount).toFixed(2));
+          else fromAcc.syp = Math.round(Number(fromAcc.syp || 0) + item.amount);
+        }
+        if (toAcc) {
+          if (item.currency === 'USD') toAcc.usd = Number((Number(toAcc.usd || 0) - item.amount).toFixed(2));
+          else toAcc.syp = Math.round(Number(toAcc.syp || 0) - item.amount);
+        }
+      }
+
+      state.history = state.history.filter(h => h.id !== id);
+      saveState();
+      renderAll();
+      showToast('تم التراجع عن العملية وإعادة الرصيد');
+    });
+
+    document.getElementById('clearHistoryBtn').addEventListener('click', () => {
+      state.history = [];
+      saveState();
+      renderHistory();
+      showToast('تم مسح السجل');
+    });
+
+    // التمرير السلس لقسم الإعدادات
+    function scrollToSettings() {
+      document.getElementById('settingsSection').scrollIntoView({ behavior: 'smooth' });
+    }
+    document.getElementById('toggleSettingsBtn').addEventListener('click', scrollToSettings);
+    document.getElementById('quickSettingsLink').addEventListener('click', scrollToSettings);
+
+    renderAll();
+  </script>
+</body>
+</html>
