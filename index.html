@@ -155,7 +155,7 @@
           <button id="clearHistoryBtn" type="button" class="text-[10px] text-slate-400 hover:text-rose-400 transition">مسح</button>
         </div>
       </div>
-      <div id="accountsHistoryContainer" class="space-y-3 max-h-80 overflow-y-auto"></div>
+      <div id="accountsHistoryContainer" class="space-y-3 max-h-96 overflow-y-auto"></div>
     </section>
 
   </div>
@@ -365,20 +365,17 @@
       }
     }
 
-    // تصميم السجل المنظم لكل حساب على حدة
     function renderHistory() {
       const container = document.getElementById('accountsHistoryContainer');
       container.innerHTML = '';
 
-      if (!state.history || state.history.length === 0) {
-        container.innerHTML = `<div class="text-[11px] text-slate-500 text-center py-2">لا توجد عمليات مسجلة بعد</div>`;
+      if (!state.accounts || state.accounts.length === 0) {
+        container.innerHTML = `<div class="text-[11px] text-slate-500 text-center py-2">لا توجد حسابات مسجلة</div>`;
         return;
       }
 
-      // ربط كل الحسابات (حتى غير المفعلة ليبقى السجل محفوظاً)
       state.accounts.forEach(acc => {
-        // تصفية العمليات الخاصة بهذا الحساب (إيداع/سحب أو نقل منه وإليه)
-        const accItems = state.history.filter(h => {
+        const accItems = (state.history || []).filter(h => {
           if (h.type === 'deposit' || h.type === 'withdraw') return h.accountId === acc.id;
           if (h.type === 'transfer') return h.fromId === acc.id || h.toId === acc.id;
           return false;
@@ -393,7 +390,7 @@
         </div>`;
 
         if (accItems.length === 0) {
-          accBox.innerHTML = headerHtml + `<div class="text-[10px] text-slate-500 text-center py-1">لا توجد حركات لهذا الحساب</div>`;
+          accBox.innerHTML = headerHtml + `<div class="text-[10px] text-slate-500 text-center py-1">لا توجد حركات مسجلة لهذا الحساب بعد</div>`;
         } else {
           let listHtml = '<div class="space-y-1.5">';
           accItems.forEach(h => {
@@ -526,7 +523,7 @@
           toAcc.usd = Number((Number(toAcc.usd || 0) + amount).toFixed(2));
         } else {
           fromAcc.syp = Math.round(Number(fromAcc.syp || 0) - amount);
-          toAcc.syp = Math.round(Number(fromAcc.syp || 0) + amount);
+          toAcc.syp = Math.round(Number(toAcc.syp || 0) + amount);
         }
 
         state.history.unshift({
