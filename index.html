@@ -140,7 +140,7 @@
 
         <div>
           <label for="opOpNumber" class="block text-[11px] font-bold text-slate-300 mb-1">رقم العملية / رقم السند (اختياري)</label>
-          <input id="opOpNumber" type="text" placeholder="مثال: #1024 أو رقم الإيصال..." class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:outline-none px-3 py-2 text-xs text-white num-font" />
+          <input id="opOpNumber" type="text" placeholder="مثال: 1024 أو رقم الإيصال..." class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:outline-none px-3 py-2 text-xs text-white num-font" />
         </div>
 
         <button id="submitOpBtn" type="submit" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition">
@@ -149,10 +149,12 @@
       </form>
     </section>
 
-    <!-- 3. السجل المنظم لكل حساب فعال ومقسّم حسب الأيام -->
+    <!-- 3. السجل التفاعلي بنظام التبويبات وشريط البحث -->
     <section class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-3 shadow-lg">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-2 flex-wrap gap-2">
-        <h2 class="text-xs font-bold text-slate-200">📜 السجل المنظم للحسابات الفعالة</h2>
+      
+      <!-- رأس السجل وأزرار التصدير والمسح -->
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2.5 flex-wrap gap-2">
+        <h2 class="text-xs font-bold text-slate-200">📜 سجل العمليات حسب الحساب</h2>
         <div class="flex items-center gap-1.5">
           <button id="exportReportBtn" type="button" class="px-2.5 py-1 rounded-lg bg-sky-600 hover:bg-sky-500 text-[10px] font-bold text-white transition">
             📥 تصدير التقرير الذكي
@@ -160,7 +162,17 @@
           <button id="clearHistoryBtn" type="button" class="text-[10px] text-slate-400 hover:text-rose-400 transition">مسح</button>
         </div>
       </div>
-      <div id="accountsHistoryContainer" class="space-y-4 max-h-[500px] overflow-y-auto"></div>
+
+      <!-- أزرار اختيار الحساب (التبويبات) -->
+      <div id="accountTabsContainer" class="flex items-center gap-1.5 overflow-x-auto pb-1"></div>
+
+      <!-- شريط البحث حسب رقم العملية أو المبلغ -->
+      <div class="relative">
+        <input id="historySearchInput" type="text" placeholder="🔍 ابحث برقم العملية أو المبلغ..." class="w-full rounded-xl bg-slate-950 border border-slate-800 focus:border-sky-500 focus:outline-none px-3 py-2 text-xs text-white" />
+      </div>
+
+      <!-- حاوية عرض سجل الحساب المختار فقط -->
+      <div id="accountsHistoryContainer" class="space-y-3 max-h-[460px] overflow-y-auto"></div>
     </section>
 
   </div>
@@ -184,6 +196,8 @@
     let state = loadState();
     let currentMode = 'deposit';
     let dbConfig = loadDbConfig();
+    let selectedHistoryAccId = null;
+    let searchQuery = '';
 
     function loadState() {
       try {
@@ -370,9 +384,11 @@
       }
     }
 
-    // تصميم سجل الحسابات المتقدم (مع فواصل الأيام)
+    // عرض أزرار التبويبات وسجل الحساب المختار فقط مع فلترة البحث
     function renderHistory() {
+      const tabsContainer = document.getElementById('accountTabsContainer');
       const container = document.getElementById('accountsHistoryContainer');
+      tabsContainer.innerHTML = '';
       container.innerHTML = '';
 
       const activeAccs = getActiveAccounts();
@@ -382,96 +398,142 @@
         return;
       }
 
+      // ضبط الحساب المختار افتراضياً على أول حساب مفعل
+      if (!selectedHistoryAccId || !activeAccs.some(a => a.id === selectedHistoryAccId)) {
+        selectedHistoryAccId = activeAccs[0].id;
+      }
+
+      // رسم أزرار اختيار الحسابات (التبويبات)
       activeAccs.forEach(acc => {
-        const accItems = (state.history || []).filter(h => {
+        const accCount = (state.history || []).filter(h => {
           if (h.type === 'deposit' || h.type === 'withdraw') return h.accountId === acc.id;
           if (h.type === 'transfer') return h.fromId === acc.id || h.toId === acc.id;
           return false;
+        }).length;
+
+        const isSelected = acc.id === selectedHistoryAccId;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.setAttribute('data-tab-acc-id', acc.id);
+        btn.className = isSelected
+          ? 'px-3 py-1.5 rounded-xl text-xs font-extrabold bg-sky-600 text-white shadow flex items-center gap-1.5 whitespace-nowrap transition'
+          : 'px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-950 text-slate-400 hover:text-white border border-slate-800 flex items-center gap-1.5 whitespace-nowrap transition';
+
+        btn.innerHTML = `
+          <span>📁 ${escapeHtml(acc.name)}</span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded-full ${isSelected ? 'bg-sky-700 text-sky-100' : 'bg-slate-900 text-slate-400'}">${accCount}</span>
+        `;
+        tabsContainer.appendChild(btn);
+      });
+
+      const currentAcc = activeAccs.find(a => a.id === selectedHistoryAccId);
+      if (!currentAcc) return;
+
+      // جلب عمليات الحساب المختار وتطبيق فلتر البحث (رقم العملية أو المبلغ)
+      const q = searchQuery.trim().toLowerCase();
+      const accItems = (state.history || []).filter(h => {
+        const belongsToAcc = (h.type === 'deposit' || h.type === 'withdraw')
+          ? h.accountId === currentAcc.id
+          : (h.type === 'transfer' && (h.fromId === currentAcc.id || h.toId === currentAcc.id));
+
+        if (!belongsToAcc) return false;
+        if (!q) return true;
+
+        const opNumMatch = String(h.opNumber || '').toLowerCase().includes(q);
+        const amountMatch = String(h.amount || '').toLowerCase().includes(q);
+        return opNumMatch || amountMatch;
+      });
+
+      if (accItems.length === 0) {
+        container.innerHTML = `<div class="bg-slate-950/70 border border-slate-800 rounded-xl p-4 text-[11px] text-slate-400 text-center">
+          ${q ? 'لا توجد عمليات مطابقة لبحثك في هذا الحساب' : 'لا توجد حركات مسجلة لهذا الحساب بعد'}
+        </div>`;
+        return;
+      }
+
+      // تجميع عمليات الحساب المختار حسب الأيام
+      const daysMap = {};
+      accItems.forEach(h => {
+        const ts = Number(h.id.replace('h_', '')) || Date.now();
+        const dateObj = new Date(ts);
+        const dateStr = h.date || dateObj.toLocaleDateString('en-CA');
+        if (!daysMap[dateStr]) daysMap[dateStr] = [];
+        daysMap[dateStr].push({
+          ...h,
+          timeStr: dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+        });
+      });
+
+      const sortedDays = Object.keys(daysMap).sort().reverse();
+
+      sortedDays.forEach(day => {
+        const dayItems = daysMap[day];
+        const dayBox = document.createElement('div');
+        dayBox.className = 'bg-slate-950/80 border border-slate-800 rounded-xl p-3 space-y-2';
+
+        let dayHtml = `
+          <div class="flex items-center justify-between text-[11px] text-sky-400 font-bold border-b border-slate-800 pb-1.5">
+            <span>📅 تاريخ اليوم: ${day}</span>
+            <span class="text-[10px] bg-slate-900 px-2 py-0.5 rounded text-slate-400">${dayItems.length} حركات</span>
+          </div>
+          <div class="space-y-1.5">
+        `;
+
+        dayItems.forEach(h => {
+          const amountStr = h.currency === 'USD' ? formatUsd(h.amount) : formatSyp(h.amount);
+          let badge = '', desc = '';
+
+          if (h.type === 'deposit') {
+            badge = `<span class="text-emerald-400 font-bold">➕ إيداع</span>`;
+            desc = `إيداع`;
+          } else if (h.type === 'withdraw') {
+            badge = `<span class="text-rose-400 font-bold">➖ سحب</span>`;
+            desc = `سحب`;
+          } else {
+            if (h.fromId === currentAcc.id) {
+              badge = `<span class="text-sky-400 font-bold">🔄 نقل صادر</span>`;
+              desc = `إلى ${escapeHtml(h.toName)}`;
+            } else {
+              badge = `<span class="text-emerald-400 font-bold">🔄 نقل وارد</span>`;
+              desc = `من ${escapeHtml(h.fromName)}`;
+            }
+          }
+
+          const opNumHtml = h.opNumber ? `<span class="text-sky-300 font-semibold bg-sky-500/10 px-2 py-0.5 rounded text-[10px] num-font">🔢 #${escapeHtml(h.opNumber)}</span>` : '';
+
+          dayHtml += `
+            <div class="bg-slate-900 border border-slate-800/70 rounded-lg px-2.5 py-2 flex items-center justify-between text-xs gap-2">
+              <div class="flex items-center gap-2 flex-wrap">
+                ${badge}
+                <span class="font-extrabold text-white num-font">${amountStr}</span>
+                <span class="text-slate-400 text-[11px]">(${desc})</span>
+                ${opNumHtml}
+                <span class="text-[10px] text-slate-500 num-font">⏱ ${h.timeStr}</span>
+              </div>
+              <button type="button" data-undo-id="${h.id}" class="text-[10px] text-rose-400 hover:underline font-semibold whitespace-nowrap">تراجع</button>
+            </div>
+          `;
         });
 
-        const accBox = document.createElement('div');
-        accBox.className = 'bg-slate-950/80 border border-slate-800 rounded-2xl p-3.5 space-y-3';
-
-        let headerHtml = `<div class="flex items-center justify-between border-b border-slate-800 pb-2">
-          <span class="font-extrabold text-sky-400 text-xs flex items-center gap-1.5">
-            <span>📁</span> حساب: ${escapeHtml(acc.name)}
-          </span>
-          <span class="text-[10px] text-slate-300 bg-slate-900 border border-slate-800 px-2 py-0.5 rounded-md font-bold">${accItems.length} عملية</span>
-        </div>`;
-
-        if (accItems.length === 0) {
-          accBox.innerHTML = headerHtml + `<div class="text-[11px] text-slate-500 text-center py-2">لا توجد حركات مسجلة لهذا الحساب بعد</div>`;
-        } else {
-          // تجميع عمليات الحساب حسب التاريخ (اليوم)
-          const daysMap = {};
-          accItems.forEach(h => {
-            const ts = Number(h.id.replace('h_', '')) || Date.now();
-            const dateObj = new Date(ts);
-            const dateStr = h.date || dateObj.toLocaleDateString('en-CA');
-            if (!daysMap[dateStr]) daysMap[dateStr] = [];
-            daysMap[dateStr].push({ ...h, timeStr: dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) });
-          });
-
-          const sortedDays = Object.keys(daysMap).sort().reverse();
-          let bodyHtml = '<div class="space-y-3">';
-
-          sortedDays.forEach(day => {
-            const dayItems = daysMap[day];
-            bodyHtml += `
-              <div class="bg-slate-900/90 border border-slate-800/80 rounded-xl p-2.5 space-y-2">
-                <div class="flex items-center justify-between text-[11px] text-sky-300 font-bold border-b border-slate-800/60 pb-1">
-                  <span>📅 تاريخ اليوم: ${day}</span>
-                  <span class="text-[10px] bg-slate-950 px-2 py-0.5 rounded text-slate-400">${dayItems.length} حركات</span>
-                </div>
-                <div class="space-y-1.5">
-            `;
-
-            dayItems.forEach(h => {
-              const amountStr = h.currency === 'USD' ? formatUsd(h.amount) : formatSyp(h.amount);
-              let badge = '', desc = '';
-
-              if (h.type === 'deposit') {
-                badge = `<span class="text-emerald-400 font-bold">➕ إيداع</span>`;
-                desc = `إيداع`;
-              } else if (h.type === 'withdraw') {
-                badge = `<span class="text-rose-400 font-bold">➖ سحب</span>`;
-                desc = `سحب`;
-              } else {
-                if (h.fromId === acc.id) {
-                  badge = `<span class="text-sky-400 font-bold">🔄 نقل صادر</span>`;
-                  desc = `إلى ${escapeHtml(h.toName)}`;
-                } else {
-                  badge = `<span class="text-emerald-400 font-bold">🔄 نقل وارد</span>`;
-                  desc = `من ${escapeHtml(h.fromName)}`;
-                }
-              }
-
-              const opNumHtml = h.opNumber ? `<span class="text-sky-300 font-semibold bg-sky-500/10 px-2 py-0.5 rounded text-[10px] num-font">🔢 #${escapeHtml(h.opNumber)}</span>` : '';
-
-              bodyHtml += `
-                <div class="bg-slate-950 border border-slate-800/50 rounded-lg px-2.5 py-1.5 flex items-center justify-between text-xs gap-2">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    ${badge}
-                    <span class="font-extrabold text-white num-font">${amountStr}</span>
-                    <span class="text-slate-400 text-[11px]">(${desc})</span>
-                    ${opNumHtml}
-                    <span class="text-[10px] text-slate-500 num-font">⏱ ${h.timeStr}</span>
-                  </div>
-                  <button type="button" data-undo-id="${h.id}" class="text-[10px] text-rose-400 hover:underline font-semibold whitespace-nowrap">تراجع</button>
-                </div>
-              `;
-            });
-
-            bodyHtml += `</div></div>`;
-          });
-
-          bodyHtml += '</div>';
-          accBox.innerHTML = headerHtml + bodyHtml;
-        }
-
-        container.appendChild(accBox);
+        dayHtml += `</div>`;
+        dayBox.innerHTML = dayHtml;
+        container.appendChild(dayBox);
       });
     }
+
+    // التبديل بين تبويبات الحسابات عند الضغط
+    document.getElementById('accountTabsContainer').addEventListener('click', e => {
+      const btn = e.target.closest('button[data-tab-acc-id]');
+      if (!btn) return;
+      selectedHistoryAccId = btn.getAttribute('data-tab-acc-id');
+      renderHistory();
+    });
+
+    // فلترة السجل فوراً عند الكتابة في شريط البحث
+    document.getElementById('historySearchInput').addEventListener('input', e => {
+      searchQuery = e.target.value;
+      renderHistory();
+    });
 
     function setMode(mode) {
       currentMode = mode;
@@ -514,7 +576,7 @@
       e.preventDefault();
       const amount = parseFloat(document.getElementById('opAmount').value);
       const currency = document.getElementById('opCurrency').value;
-      const opNumber = document.getElementById('opOpNumber').value.trim();
+      const opNumber = document.getElementById('opOpNumber').value.trim().replace(/^#+/, '');
       if (!amount || amount <= 0) return;
 
       const nowTimestamp = Date.now();
@@ -542,6 +604,7 @@
           accountId: acc.id,
           accountName: acc.name
         });
+        selectedHistoryAccId = acc.id;
         showToast(currentMode === 'deposit' ? 'تمت إضافة المبلغ للرصيد' : 'تم خصم المبلغ من الرصيد');
       } else if (currentMode === 'transfer') {
         const fromId = document.getElementById('fromAccount').value;
@@ -560,7 +623,7 @@
           toAcc.usd = Number((Number(toAcc.usd || 0) + amount).toFixed(2));
         } else {
           fromAcc.syp = Math.round(Number(fromAcc.syp || 0) - amount);
-          toAcc.syp = Math.round(Number(fromAcc.syp || 0) + amount);
+          toAcc.syp = Math.round(Number(toAcc.syp || 0) + amount);
         }
 
         state.history.unshift({
@@ -575,6 +638,7 @@
           toId: toAcc.id,
           toName: toAcc.name
         });
+        selectedHistoryAccId = fromAcc.id;
         showToast(`تم نقل المبلغ من ${fromAcc.name} إلى ${toAcc.name}`);
       }
 
@@ -623,7 +687,6 @@
       showToast('تم مسح السجل');
     });
 
-    // تصدير التقرير الذكي مقسماً بالأيام مع عدد عمليات السحب والإيداع وأرقام العمليات
     document.getElementById('exportReportBtn').addEventListener('click', () => {
       if (!state.history || state.history.length === 0) {
         showToast('لا توجد عمليات لتصديرها');
@@ -651,7 +714,6 @@
         reportText += `\n[ حساب: ${acc.name} ] (إجمالي العمليات: ${accItems.length})\n`;
         reportText += `----------------------------------------\n`;
 
-        // تجميع عمليات هذا الحساب حسب الأيام
         const dayMap = {};
         accItems.forEach(h => {
           const ts = Number(h.id.replace('h_', '')) || Date.now();
