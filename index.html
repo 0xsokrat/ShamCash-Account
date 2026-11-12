@@ -93,7 +93,7 @@
 
     </section>
 
-    <!-- 2. خانة العمليات السريعة -->
+    <!-- 2. خانة العمليات السريعة (مع خانة اسم الشخص/الملاحظة) -->
     <section class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
       <div class="grid grid-cols-3 bg-slate-950/70 p-1 gap-1 border-b border-slate-800">
         <button id="modeDepositBtn" type="button" class="py-2 px-1 rounded-xl text-xs font-bold transition bg-emerald-600 text-white shadow">
@@ -138,16 +138,21 @@
           </div>
         </div>
 
+        <div>
+          <label for="opNote" class="block text-[11px] font-bold text-slate-300 mb-1">اسم الشخص / ملاحظة (اختياري)</label>
+          <input id="opNote" type="text" placeholder="مثال: منصب من فلان، أو اسم الزبون..." class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:outline-none px-3 py-2 text-xs text-white" />
+        </div>
+
         <button id="submitOpBtn" type="submit" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition">
           تأكيد الإيداع وتحديث الرصيد
         </button>
       </form>
     </section>
 
-    <!-- 3. السجل المنظم لكل حساب على حدة -->
+    <!-- 3. السجل المنظم لكل حساب فعال على حدة -->
     <section class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-3 shadow-lg">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2 flex-wrap gap-2">
-        <h2 class="text-xs font-bold text-slate-200">📜 السجل المنظم لكل حساب</h2>
+        <h2 class="text-xs font-bold text-slate-200">📜 السجل المنظم للحسابات الفعالة</h2>
         <div class="flex items-center gap-1.5">
           <button id="exportReportBtn" type="button" class="px-2.5 py-1 rounded-lg bg-sky-600 hover:bg-sky-500 text-[10px] font-bold text-white transition">
             📥 تصدير
@@ -365,16 +370,19 @@
       }
     }
 
+    // عرض سجل مستقل ومنظم لكل حساب فعال في أقسام منفصلة
     function renderHistory() {
       const container = document.getElementById('accountsHistoryContainer');
       container.innerHTML = '';
 
-      if (!state.accounts || state.accounts.length === 0) {
-        container.innerHTML = `<div class="text-[11px] text-slate-500 text-center py-2">لا توجد حسابات مسجلة</div>`;
+      const activeAccs = getActiveAccounts();
+
+      if (!activeAccs || activeAccs.length === 0) {
+        container.innerHTML = `<div class="text-[11px] text-slate-500 text-center py-2">لا توجد حسابات مفعلة لعرض سجلها</div>`;
         return;
       }
 
-      state.accounts.forEach(acc => {
+      activeAccs.forEach(acc => {
         const accItems = (state.history || []).filter(h => {
           if (h.type === 'deposit' || h.type === 'withdraw') return h.accountId === acc.id;
           if (h.type === 'transfer') return h.fromId === acc.id || h.toId === acc.id;
@@ -404,10 +412,10 @@
 
             if (h.type === 'deposit') {
               badge = `<span class="text-emerald-400 font-bold">➕ إيداع</span>`;
-              desc = `إيداع بالمبلغ`;
+              desc = `إيداع`;
             } else if (h.type === 'withdraw') {
               badge = `<span class="text-rose-400 font-bold">➖ سحب</span>`;
-              desc = `سحب من الحساب`;
+              desc = `سحب`;
             } else {
               if (h.fromId === acc.id) {
                 badge = `<span class="text-sky-400 font-bold">🔄 نقل صادر</span>`;
@@ -418,15 +426,19 @@
               }
             }
 
+            // عرض الملاحظة أو اسم الشخص إذا وُجدت
+            const noteHtml = h.note ? `<span class="text-amber-300 font-semibold bg-amber-500/10 px-2 py-0.5 rounded text-[11px]">👤 ${escapeHtml(h.note)}</span>` : '';
+
             listHtml += `
-              <div class="bg-slate-900 border border-slate-800/80 rounded-lg px-2.5 py-1.5 flex items-center justify-between text-xs">
+              <div class="bg-slate-900 border border-slate-800/80 rounded-lg px-2.5 py-2 flex items-center justify-between text-xs gap-2">
                 <div class="flex items-center gap-2 flex-wrap">
                   ${badge}
                   <span class="font-extrabold text-white num-font">${amountStr}</span>
                   <span class="text-slate-400 text-[11px]">(${desc})</span>
+                  ${noteHtml}
                   <span class="text-[10px] text-slate-500 num-font">⏱ ${dateStr} ${timeStr}</span>
                 </div>
-                <button type="button" data-undo-id="${h.id}" class="text-[10px] text-rose-400 hover:underline font-semibold">تراجع</button>
+                <button type="button" data-undo-id="${h.id}" class="text-[10px] text-rose-400 hover:underline font-semibold whitespace-nowrap">تراجع</button>
               </div>
             `;
           });
@@ -479,6 +491,7 @@
       e.preventDefault();
       const amount = parseFloat(document.getElementById('opAmount').value);
       const currency = document.getElementById('opCurrency').value;
+      const note = document.getElementById('opNote').value.trim();
       if (!amount || amount <= 0) return;
 
       const nowTimestamp = Date.now();
@@ -502,6 +515,7 @@
           type: currentMode,
           amount,
           currency,
+          note,
           accountId: acc.id,
           accountName: acc.name
         });
@@ -532,6 +546,7 @@
           type: 'transfer',
           amount,
           currency,
+          note,
           fromId: fromAcc.id,
           fromName: fromAcc.name,
           toId: toAcc.id,
@@ -543,6 +558,7 @@
       saveState();
       renderAll();
       document.getElementById('opAmount').value = '';
+      document.getElementById('opNote').value = '';
       document.getElementById('opCurrency').value = 'USD';
     });
 
@@ -601,7 +617,7 @@
       reportText += "\n";
 
       reportText += "--- سجل العمليات مرتباً حسب الحسابات ---\n";
-      state.accounts.forEach(acc => {
+      getActiveAccounts().forEach(acc => {
         const accItems = state.history.filter(h => {
           if (h.type === 'deposit' || h.type === 'withdraw') return h.accountId === acc.id;
           if (h.type === 'transfer') return h.fromId === acc.id || h.toId === acc.id;
@@ -614,14 +630,15 @@
           const dateObj = new Date(ts);
           const date = h.date || dateObj.toLocaleDateString('en-CA');
           const time = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+          const noteStr = h.note ? ` [الشخص/الملاحظة: ${h.note}]` : '';
           
           if (h.type === 'deposit') {
-            reportText += `  ${index + 1}. [إيداع] ${date} ${time} - المبلغ: ${h.amount} ${h.currency}\n`;
+            reportText += `  ${index + 1}. [إيداع] ${date} ${time} - المبلغ: ${h.amount} ${h.currency}${noteStr}\n`;
           } else if (h.type === 'withdraw') {
-            reportText += `  ${index + 1}. [سحب] ${date} ${time} - المبلغ: ${h.amount} ${h.currency}\n`;
+            reportText += `  ${index + 1}. [سحب] ${date} ${time} - المبلغ: ${h.amount} ${h.currency}${noteStr}\n`;
           } else {
             const dir = h.fromId === acc.id ? `إلى ${h.toName}` : `من ${h.fromName}`;
-            reportText += `  ${index + 1}. [نقل] ${date} ${time} - المبلغ: ${h.amount} ${h.currency} (${dir})\n`;
+            reportText += `  ${index + 1}. [نقل] ${date} ${time} - المبلغ: ${h.amount} ${h.currency} (${dir})${noteStr}\n`;
           }
         });
         reportText += "\n";
