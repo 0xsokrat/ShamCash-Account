@@ -46,13 +46,13 @@
       </a>
     </div>
 
-    <!-- 1. لوحة الملخص المدمجة بالأعلى -->
+    <!-- 1. لوحة الملخص المدمجة بالأعلى (الرصيد الكلي + لنا من الشركة + صافي المبلغ لهم + الحسابات) -->
     <section class="bg-gradient-to-br from-slate-900 to-slate-950 border border-emerald-500/40 rounded-2xl p-4 shadow-xl space-y-3">
       
-      <!-- الرصيد الكلي -->
+      <!-- الرصيد الكلي (مجموع أرصدة الحسابات) -->
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <div>
-          <span class="text-[11px] font-bold text-slate-400 block">الرصيد الكلي المجمع</span>
+          <span class="text-[11px] font-bold text-slate-400 block">إجمالي أرصدة الحسابات المفعلة</span>
           <div class="flex items-center gap-3 mt-0.5">
             <span id="totalUsdDisplay" class="text-xl sm:text-2xl font-extrabold text-emerald-400 num-font">$0</span>
             <span class="text-slate-600">|</span>
@@ -60,6 +60,49 @@
           </div>
         </div>
         <span id="activeAccountsBadge" class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">0 حسابات</span>
+      </div>
+
+      <!-- قسم: لنا من الشركة (إدخال يدوي) + صافي المبلغ لهم (الرصيد الكلي - لنا من الشركة) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 border-b border-slate-800 pb-3">
+        
+        <!-- خانة: لنا من الشركة (تعديل يدوي مباشر) -->
+        <div class="bg-slate-950/90 border border-sky-500/30 rounded-xl p-3 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold text-sky-400">📥 لنا من الشركة (يدوي)</span>
+            <button id="saveCompanyOwedBtn" type="button" class="text-[10px] font-bold bg-sky-600 hover:bg-sky-500 text-white px-2.5 py-0.5 rounded-lg transition shadow">
+              حفظ
+            </button>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[10px] text-slate-400 block mb-0.5">دولار ($)</label>
+              <input id="companyOwedUsdInput" type="number" step="any" placeholder="0" class="w-full rounded-lg bg-slate-900 border border-slate-700 focus:border-sky-500 focus:outline-none px-2 py-1 text-sm font-extrabold text-sky-300 num-font" />
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400 block mb-0.5">سوري (SYP)</label>
+              <input id="companyOwedSypInput" type="number" step="any" placeholder="0" class="w-full rounded-lg bg-slate-900 border border-slate-700 focus:border-sky-500 focus:outline-none px-2 py-1 text-sm font-extrabold text-amber-300 num-font" />
+            </div>
+          </div>
+        </div>
+
+        <!-- خانة: صافي المبلغ لهم (مجموع أرصدة الحسابات - لنا من الشركة) -->
+        <div class="bg-slate-950/90 border border-purple-500/30 rounded-xl p-3 flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold text-purple-400">⚖️ صافي المبلغ لهم</span>
+            <span class="text-[10px] text-slate-400">(الأرصدة - لنا)</span>
+          </div>
+          <div class="mt-2 flex items-center justify-between border-t border-slate-800/80 pt-2">
+            <div>
+              <span class="text-[10px] text-slate-400 block">الصافي بالدولار</span>
+              <span id="netForThemUsdDisplay" class="text-lg font-extrabold text-purple-300 num-font">$0</span>
+            </div>
+            <div class="text-left">
+              <span class="text-[10px] text-slate-400 block">الصافي بالسوري</span>
+              <span id="netForThemSypDisplay" class="text-sm font-extrabold text-amber-300 num-font">0 SYP</span>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- تفاصيل أرصدة الحسابات المفعلة -->
@@ -190,7 +233,9 @@
         { id: 'acc_1', name: 'حساب 1', usd: 1500, syp: 10000000, active: true },
         { id: 'acc_2', name: 'حساب 2', usd: 500, syp: 5000000, active: true }
       ],
-      history: []
+      history: [],
+      companyOwedUsd: 0,
+      companyOwedSyp: 0
     };
 
     let state = loadState();
@@ -204,7 +249,11 @@
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (parsed && Array.isArray(parsed.accounts)) return parsed;
+          if (parsed && Array.isArray(parsed.accounts)) {
+            parsed.companyOwedUsd = Number(parsed.companyOwedUsd) || 0;
+            parsed.companyOwedSyp = Number(parsed.companyOwedSyp) || 0;
+            return parsed;
+          }
         }
       } catch (e) {}
       return JSON.parse(JSON.stringify(defaultState));
@@ -235,6 +284,8 @@
           body: JSON.stringify({
             accounts: state.accounts,
             history: state.history,
+            companyOwedUsd: Number(state.companyOwedUsd) || 0,
+            companyOwedSyp: Number(state.companyOwedSyp) || 0,
             updatedAt: Date.now()
           })
         });
@@ -251,6 +302,8 @@
           if (data && Array.isArray(data.accounts)) {
             state.accounts = data.accounts;
             state.history = Array.isArray(data.history) ? data.history : [];
+            if (data.companyOwedUsd !== undefined) state.companyOwedUsd = Number(data.companyOwedUsd) || 0;
+            if (data.companyOwedSyp !== undefined) state.companyOwedSyp = Number(data.companyOwedSyp) || 0;
             try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
             renderAll();
           }
@@ -273,7 +326,8 @@
 
     function formatUsd(val) {
       const n = Number(val) || 0;
-      return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+      const sign = n < 0 ? '-' : '';
+      return sign + '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
     }
 
     function formatSyp(val) {
@@ -312,6 +366,21 @@
       document.getElementById('totalUsdDisplay').textContent = formatUsd(totalUsd);
       document.getElementById('totalSypDisplay').textContent = formatSyp(totalSyp);
       document.getElementById('activeAccountsBadge').textContent = `${activeAccs.length} حسابات`;
+
+      // تحديث حقول "لنا من الشركة" وحساب "صافي المبلغ لهم" (مجموع الأرصدة - لنا من الشركة)
+      const owedUsd = Number(state.companyOwedUsd) || 0;
+      const owedSyp = Number(state.companyOwedSyp) || 0;
+
+      const usdInput = document.getElementById('companyOwedUsdInput');
+      const sypInput = document.getElementById('companyOwedSypInput');
+      if (document.activeElement !== usdInput) usdInput.value = owedUsd || '';
+      if (document.activeElement !== sypInput) sypInput.value = owedSyp || '';
+
+      const netUsd = totalUsd - owedUsd;
+      const netSyp = totalSyp - owedSyp;
+
+      document.getElementById('netForThemUsdDisplay').textContent = formatUsd(netUsd);
+      document.getElementById('netForThemSypDisplay').textContent = formatSyp(netSyp);
 
       let depUsd = 0, depSyp = 0, wdUsd = 0, wdSyp = 0;
       (state.history || []).forEach(h => {
@@ -354,6 +423,21 @@
       });
     }
 
+    // تحديث فوري لصافي المبلغ أثناء الكتابة في خانة "لنا من الشركة"
+    function handleCompanyOwedChange(showNotification) {
+      const valUsd = parseFloat(document.getElementById('companyOwedUsdInput').value) || 0;
+      const valSyp = parseFloat(document.getElementById('companyOwedSypInput').value) || 0;
+      state.companyOwedUsd = valUsd;
+      state.companyOwedSyp = valSyp;
+      saveState();
+      renderTopAndActiveAccounts();
+      if (showNotification) showToast('تم حفظ مبلغ (لنا من الشركة) وتحديث الصافي ✓');
+    }
+
+    document.getElementById('companyOwedUsdInput').addEventListener('input', () => handleCompanyOwedChange(false));
+    document.getElementById('companyOwedSypInput').addEventListener('input', () => handleCompanyOwedChange(false));
+    document.getElementById('saveCompanyOwedBtn').addEventListener('click', () => handleCompanyOwedChange(true));
+
     function renderAccountSelects() {
       const activeAccs = getActiveAccounts();
       const opSel = document.getElementById('opAccount');
@@ -384,7 +468,6 @@
       }
     }
 
-    // عرض أزرار التبويبات وسجل الحساب المختار فقط مع فلترة البحث
     function renderHistory() {
       const tabsContainer = document.getElementById('accountTabsContainer');
       const container = document.getElementById('accountsHistoryContainer');
@@ -398,12 +481,10 @@
         return;
       }
 
-      // ضبط الحساب المختار افتراضياً على أول حساب مفعل
       if (!selectedHistoryAccId || !activeAccs.some(a => a.id === selectedHistoryAccId)) {
         selectedHistoryAccId = activeAccs[0].id;
       }
 
-      // رسم أزرار اختيار الحسابات (التبويبات)
       activeAccs.forEach(acc => {
         const accCount = (state.history || []).filter(h => {
           if (h.type === 'deposit' || h.type === 'withdraw') return h.accountId === acc.id;
@@ -429,7 +510,6 @@
       const currentAcc = activeAccs.find(a => a.id === selectedHistoryAccId);
       if (!currentAcc) return;
 
-      // جلب عمليات الحساب المختار وتطبيق فلتر البحث (رقم العملية أو المبلغ)
       const q = searchQuery.trim().toLowerCase();
       const accItems = (state.history || []).filter(h => {
         const belongsToAcc = (h.type === 'deposit' || h.type === 'withdraw')
@@ -451,7 +531,6 @@
         return;
       }
 
-      // تجميع عمليات الحساب المختار حسب الأيام
       const daysMap = {};
       accItems.forEach(h => {
         const ts = Number(h.id.replace('h_', '')) || Date.now();
@@ -521,7 +600,6 @@
       });
     }
 
-    // التبديل بين تبويبات الحسابات عند الضغط
     document.getElementById('accountTabsContainer').addEventListener('click', e => {
       const btn = e.target.closest('button[data-tab-acc-id]');
       if (!btn) return;
@@ -529,7 +607,6 @@
       renderHistory();
     });
 
-    // فلترة السجل فوراً عند الكتابة في شريط البحث
     document.getElementById('historySearchInput').addEventListener('input', e => {
       searchQuery = e.target.value;
       renderHistory();
@@ -688,24 +765,34 @@
     });
 
     document.getElementById('exportReportBtn').addEventListener('click', () => {
-      if (!state.history || state.history.length === 0) {
-        showToast('لا توجد عمليات لتصديرها');
-        return;
-      }
+      let totalUsd = 0, totalSyp = 0;
+      getActiveAccounts().forEach(a => {
+        totalUsd += Number(a.usd) || 0;
+        totalSyp += Number(a.syp) || 0;
+      });
+      const owedUsd = Number(state.companyOwedUsd) || 0;
+      const owedSyp = Number(state.companyOwedSyp) || 0;
+      const netUsd = totalUsd - owedUsd;
+      const netSyp = totalSyp - owedSyp;
 
       let reportText = "====================================\n";
       reportText += "      تقرير الأرصدة والملخص المالي      \n";
       reportText += "====================================\n\n";
 
+      reportText += "--- الملخص العام والصافي ---\n";
+      reportText += `• إجمالي أرصدة الحسابات: USD ${totalUsd} | SYP ${totalSyp}\n`;
+      reportText += `• لنا من الشركة: USD ${owedUsd} | SYP ${owedSyp}\n`;
+      reportText += `• صافي المبلغ لهم: USD ${netUsd} | SYP ${netSyp}\n\n`;
+
       reportText += "--- أرصدة الحسابات الفعالة الحالية ---\n";
-      state.accounts.filter(a => a.active).forEach(acc => {
+      getActiveAccounts().forEach(acc => {
         reportText += `• ${acc.name}: USD ${acc.usd} | SYP ${acc.syp}\n`;
       });
       reportText += "\n";
 
       reportText += "--- سجل العمليات مفصلاً حسب الحسابات والأيام ---\n";
       getActiveAccounts().forEach(acc => {
-        const accItems = state.history.filter(h => {
+        const accItems = (state.history || []).filter(h => {
           if (h.type === 'deposit' || h.type === 'withdraw') return h.accountId === acc.id;
           if (h.type === 'transfer') return h.fromId === acc.id || h.toId === acc.id;
           return false;
@@ -772,6 +859,8 @@
           if (data && Array.isArray(data.accounts)) {
             state.accounts = data.accounts;
             state.history = Array.isArray(data.history) ? data.history : [];
+            if (data.companyOwedUsd !== undefined) state.companyOwedUsd = Number(data.companyOwedUsd) || 0;
+            if (data.companyOwedSyp !== undefined) state.companyOwedSyp = Number(data.companyOwedSyp) || 0;
             renderAll();
           }
         }).catch(e => {});
