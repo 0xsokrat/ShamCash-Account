@@ -37,13 +37,19 @@
 
   <div class="max-w-xl mx-auto space-y-4">
 
-    <!-- شريط العنوان وزر الانتقال للإعدادات -->
-    <div class="flex items-center justify-between">
+    <!-- شريط العنوان وزر الاسترجاع السحابي والإعدادات -->
+    <div class="flex items-center justify-between gap-2">
       <h1 class="text-base font-extrabold text-white">لوحة الأرصدة والحسابات</h1>
-      <a href="settings.html" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1.5 transition">
-        <span>⚙️</span>
-        <span>الإعدادات</span>
-      </a>
+      <div class="flex items-center gap-1.5">
+        <button id="forcePullCloudBtn" type="button" class="px-2.5 py-1.5 rounded-xl bg-sky-600/20 hover:bg-sky-600/30 border border-sky-500/40 text-[11px] font-bold text-sky-300 flex items-center gap-1 transition">
+          <span>☁️</span>
+          <span>مزامنة السجل</span>
+        </button>
+        <a href="settings.html" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1.5 transition">
+          <span>⚙️</span>
+          <span>الإعدادات</span>
+        </a>
+      </div>
     </div>
 
     <!-- 1. لوحة الملخص المدمجة بالأعلى -->
@@ -177,7 +183,7 @@
           <input id="opOpNumber" type="text" placeholder="مثال: 1024 أو رقم الإيصال..." class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:outline-none px-3 py-2 text-xs text-white num-font" />
         </div>
 
-        <!-- خيار إعادة رصيد مسحوب سابقاً (يظهر في وضع الإيداع) -->
+        <!-- خيار إعادة رصيد مسحوب سابقاً -->
         <div id="returnDepositOptionBox" class="bg-slate-950/90 border border-amber-500/30 rounded-xl px-3 py-2.5">
           <label class="flex items-center gap-2 cursor-pointer select-none">
             <input id="isReturnDepositCheckbox" type="checkbox" class="w-4 h-4 rounded accent-amber-500 cursor-pointer" />
@@ -185,7 +191,7 @@
           </label>
         </div>
 
-        <!-- خيار سحب مؤقت خاص بي (يظهر في وضع السحب) -->
+        <!-- خيار سحب مؤقت خاص بي -->
         <div id="tempWithdrawOptionBox" class="hidden bg-slate-950/90 border border-amber-500/30 rounded-xl px-3 py-2.5">
           <label class="flex items-center gap-2 cursor-pointer select-none">
             <input id="isTempWithdrawCheckbox" type="checkbox" class="w-4 h-4 rounded accent-amber-500 cursor-pointer" />
@@ -213,15 +219,15 @@
         </div>
       </div>
 
-      <!-- أزرار اختيار الحساب (التبويبات) -->
+      <!-- أزرار اختيار الحساب (التبويبات + زر كل العمليات) -->
       <div id="accountTabsContainer" class="flex items-center gap-1.5 overflow-x-auto pb-1"></div>
 
       <!-- شريط البحث حسب رقم العملية أو المبلغ -->
       <div class="relative">
-        <input id="historySearchInput" type="text" placeholder="🔍 ابحث برقم العملية أو المبلغ..." class="w-full rounded-xl bg-slate-950 border border-slate-800 focus:border-sky-500 focus:outline-none px-3 py-2 text-xs text-white" />
+        <input id="historySearchInput" type="text" placeholder="🔍 ابحث برقم العملية أو المبلغ أو الملاحظة..." class="w-full rounded-xl bg-slate-950 border border-slate-800 focus:border-sky-500 focus:outline-none px-3 py-2 text-xs text-white" />
       </div>
 
-      <!-- حاوية عرض سجل الحساب المختار فقط -->
+      <!-- حاوية عرض سجل الحساب المختار -->
       <div id="accountsHistoryContainer" class="space-y-3 max-h-[460px] overflow-y-auto"></div>
     </section>
 
@@ -233,6 +239,7 @@
 
   <script>
     const STORAGE_KEY = 'simple_balance_mediator_v2';
+    const OLD_KEYS = ['simple_balance_mediator_v1', 'shamcash_state', 'balances_state'];
     const DB_CONFIG_KEY = 'simple_balance_db_config_v1';
 
     const defaultState = {
@@ -248,7 +255,7 @@
     let state = loadState();
     let currentMode = 'deposit';
     let dbConfig = loadDbConfig();
-    let selectedHistoryAccId = null;
+    let selectedHistoryAccId = 'ALL'; // افتراضياً يعرض كل العمليات لضمان عدم اختفاء أي حركة
     let searchQuery = '';
 
     function loadState() {
@@ -257,8 +264,23 @@
         if (raw) {
           const parsed = JSON.parse(raw);
           if (parsed && Array.isArray(parsed.accounts)) {
+            parsed.history = Array.isArray(parsed.history) ? parsed.history : [];
             parsed.companyOwedUsd = Number(parsed.companyOwedUsd) || 0;
             parsed.companyOwedSyp = Number(parsed.companyOwedSyp) || 0;
+
+            // إذا كان السجل فارغاً، نبحث في أي مفتاح قديم بالمتصفح لاسترجاع السجل إن وُجد
+            if (parsed.history.length === 0) {
+              for (const k of OLD_KEYS) {
+                const oldRaw = localStorage.getItem(k);
+                if (oldRaw) {
+                  const oldParsed = JSON.parse(oldRaw);
+                  if (oldParsed && Array.isArray(oldParsed.history) && oldParsed.history.length > 0) {
+                    parsed.history = oldParsed.history;
+                    break;
+                  }
+                }
+              }
+            }
             return parsed;
           }
         }
@@ -299,23 +321,41 @@
       } catch (e) {}
     }
 
-    async function pullStateFromCloud(silent) {
+    async function pullStateFromCloud(showMsg) {
       const endpoint = getCloudEndpoint();
-      if (!endpoint) return;
+      if (!endpoint) {
+        if (showMsg) showToast('لم يتم ربط رابط السحابة في الإعدادات بعد');
+        return;
+      }
       try {
         const res = await fetch(endpoint);
         if (res.ok) {
           const data = await res.json();
           if (data && Array.isArray(data.accounts)) {
             state.accounts = data.accounts;
-            state.history = Array.isArray(data.history) ? data.history : [];
+            // نحافظ على السجل الأطول لو كان السجل المحلي فيه عمليات أكثر أو ندمجهما بدون تكرار
+            const cloudHist = Array.isArray(data.history) ? data.history : [];
+            const localHist = Array.isArray(state.history) ? state.history : [];
+            const mergedMap = new Map();
+            [...cloudHist, ...localHist].forEach(item => {
+              if (item && item.id) mergedMap.set(item.id, item);
+            });
+            state.history = Array.from(mergedMap.values()).sort((a, b) => {
+              const tA = Number(String(a.id).replace('h_', '')) || 0;
+              const tB = Number(String(b.id).replace('h_', '')) || 0;
+              return tB - tA;
+            });
+
             if (data.companyOwedUsd !== undefined) state.companyOwedUsd = Number(data.companyOwedUsd) || 0;
             if (data.companyOwedSyp !== undefined) state.companyOwedSyp = Number(data.companyOwedSyp) || 0;
             try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
             renderAll();
+            if (showMsg) showToast(`تمت المزامنة بنجاح (${state.history.length} عملية) ✓`);
           }
         }
-      } catch (e) {}
+      } catch (e) {
+        if (showMsg) showToast('تعذر الاتصال بالسحابة حالياً');
+      }
     }
 
     function saveState() {
@@ -354,6 +394,16 @@
       return state.accounts.filter(a => a.active);
     }
 
+    // دالة ذكية تطابق العملية مع الحساب سواء عبر الـ ID أو عبر اسم الحساب
+    function doesItemBelongToAccount(h, acc) {
+      if (!h || !acc) return false;
+      const accNameTrim = String(acc.name || '').trim();
+      if (h.type === 'transfer') {
+        return h.fromId === acc.id || h.toId === acc.id || String(h.fromName || '').trim() === accNameTrim || String(h.toName || '').trim() === accNameTrim;
+      }
+      return h.accountId === acc.id || String(h.accountName || '').trim() === accNameTrim;
+    }
+
     function renderAll() {
       renderTopAndActiveAccounts();
       renderAccountSelects();
@@ -382,7 +432,6 @@
       if (document.activeElement !== usdInput) usdInput.value = owedUsd || '';
       if (document.activeElement !== sypInput) sypInput.value = owedSyp || '';
 
-      // حساب الوارد الصافي، الصادر الصافي، وصافي السحوبات المؤقتة غير المستردة
       let depUsd = 0, depSyp = 0, wdUsd = 0, wdSyp = 0;
       let tempOutUsd = 0, tempOutSyp = 0;
 
@@ -461,6 +510,7 @@
     document.getElementById('companyOwedUsdInput').addEventListener('input', () => handleCompanyOwedChange(false));
     document.getElementById('companyOwedSypInput').addEventListener('input', () => handleCompanyOwedChange(false));
     document.getElementById('saveCompanyOwedBtn').addEventListener('click', () => handleCompanyOwedChange(true));
+    document.getElementById('forcePullCloudBtn').addEventListener('click', () => pullStateFromCloud(true));
 
     function renderAccountSelects() {
       const activeAccs = getActiveAccounts();
@@ -499,23 +549,29 @@
       container.innerHTML = '';
 
       const activeAccs = getActiveAccounts();
+      const allHistory = state.history || [];
 
-      if (!activeAccs || activeAccs.length === 0) {
-        container.innerHTML = `<div class="text-[11px] text-slate-500 text-center py-2">لا توجد حسابات مفعلة لعرض سجلها</div>`;
-        return;
+      if (!selectedHistoryAccId || (selectedHistoryAccId !== 'ALL' && !activeAccs.some(a => a.id === selectedHistoryAccId))) {
+        selectedHistoryAccId = 'ALL';
       }
 
-      if (!selectedHistoryAccId || !activeAccs.some(a => a.id === selectedHistoryAccId)) {
-        selectedHistoryAccId = activeAccs[0].id;
-      }
+      // 1. زر "كل العمليات" الشامل (لضمان رؤية أي عملية مهما كان حسابها)
+      const isAllSelected = selectedHistoryAccId === 'ALL';
+      const allBtn = document.createElement('button');
+      allBtn.type = 'button';
+      allBtn.setAttribute('data-tab-acc-id', 'ALL');
+      allBtn.className = isAllSelected
+        ? 'px-3 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-600 text-white shadow flex items-center gap-1.5 whitespace-nowrap transition'
+        : 'px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-950 text-slate-400 hover:text-white border border-slate-800 flex items-center gap-1.5 whitespace-nowrap transition';
+      allBtn.innerHTML = `
+        <span>🌐 كل العمليات</span>
+        <span class="text-[10px] px-1.5 py-0.5 rounded-full ${isAllSelected ? 'bg-emerald-700 text-emerald-100' : 'bg-slate-900 text-slate-400'}">${allHistory.length}</span>
+      `;
+      tabsContainer.appendChild(allBtn);
 
+      // 2. أزرار الحسابات الفعالة
       activeAccs.forEach(acc => {
-        const accCount = (state.history || []).filter(h => {
-          if (h.type === 'deposit' || h.type === 'withdraw' || h.type === 'return_deposit' || h.type === 'temp_withdraw') return h.accountId === acc.id;
-          if (h.type === 'transfer') return h.fromId === acc.id || h.toId === acc.id;
-          return false;
-        }).length;
-
+        const accCount = allHistory.filter(h => doesItemBelongToAccount(h, acc)).length;
         const isSelected = acc.id === selectedHistoryAccId;
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -531,33 +587,30 @@
         tabsContainer.appendChild(btn);
       });
 
-      const currentAcc = activeAccs.find(a => a.id === selectedHistoryAccId);
-      if (!currentAcc) return;
-
+      const currentAcc = selectedHistoryAccId === 'ALL' ? null : activeAccs.find(a => a.id === selectedHistoryAccId);
       const q = searchQuery.trim().toLowerCase();
-      const accItems = (state.history || []).filter(h => {
-        const belongsToAcc = (h.type === 'deposit' || h.type === 'withdraw' || h.type === 'return_deposit' || h.type === 'temp_withdraw')
-          ? h.accountId === currentAcc.id
-          : (h.type === 'transfer' && (h.fromId === currentAcc.id || h.toId === currentAcc.id));
 
-        if (!belongsToAcc) return false;
+      const accItems = allHistory.filter(h => {
+        const belongs = selectedHistoryAccId === 'ALL' ? true : doesItemBelongToAccount(h, currentAcc);
+        if (!belongs) return false;
         if (!q) return true;
 
-        const opNumMatch = String(h.opNumber || '').toLowerCase().includes(q);
+        const opNumMatch = String(h.opNumber || h.note || '').toLowerCase().includes(q);
         const amountMatch = String(h.amount || '').toLowerCase().includes(q);
-        return opNumMatch || amountMatch;
+        const accNameMatch = String(h.accountName || '').toLowerCase().includes(q);
+        return opNumMatch || amountMatch || accNameMatch;
       });
 
       if (accItems.length === 0) {
         container.innerHTML = `<div class="bg-slate-950/70 border border-slate-800 rounded-xl p-4 text-[11px] text-slate-400 text-center">
-          ${q ? 'لا توجد عمليات مطابقة لبحثك في هذا الحساب' : 'لا توجد حركات مسجلة لهذا الحساب بعد'}
+          ${q ? 'لا توجد عمليات مطابقة لبحثك' : 'لا توجد حركات مسجلة في هذا القسم بعد'}
         </div>`;
         return;
       }
 
       const daysMap = {};
       accItems.forEach(h => {
-        const ts = Number(h.id.replace('h_', '')) || Date.now();
+        const ts = Number(String(h.id || '').replace('h_', '')) || Date.now();
         const dateObj = new Date(ts);
         const dateStr = h.date || dateObj.toLocaleDateString('en-CA');
         if (!daysMap[dateStr]) daysMap[dateStr] = [];
@@ -585,30 +638,38 @@
         dayItems.forEach(h => {
           const amountStr = h.currency === 'USD' ? formatUsd(h.amount) : formatSyp(h.amount);
           let badge = '', desc = '';
+          const targetAccName = escapeHtml(h.accountName || '');
 
           if (h.type === 'return_deposit' || (h.type === 'deposit' && h.isReturn)) {
             badge = `<span class="text-amber-400 font-bold">↩️ استرداد رصيد</span>`;
-            desc = `إعادة مسحوب - خارج الوارد`;
+            desc = selectedHistoryAccId === 'ALL' ? `إلى ${targetAccName}` : `إعادة مسحوب`;
           } else if (h.type === 'temp_withdraw' || (h.type === 'withdraw' && h.isTemp)) {
             badge = `<span class="text-amber-400 font-bold">⏳ سحب مؤقت</span>`;
-            desc = `سحب خاص - خارج الصادر`;
+            desc = selectedHistoryAccId === 'ALL' ? `من ${targetAccName}` : `سحب مؤقت`;
+          } else if (h.type === 'topup') {
+            badge = `<span class="text-amber-400 font-bold">⚡ تغذية</span>`;
+            desc = selectedHistoryAccId === 'ALL' ? `إلى ${targetAccName}` : `تغذية`;
           } else if (h.type === 'deposit') {
             badge = `<span class="text-emerald-400 font-bold">➕ إيداع</span>`;
-            desc = `إيداع`;
+            desc = selectedHistoryAccId === 'ALL' ? `إلى ${targetAccName}` : `إيداع`;
           } else if (h.type === 'withdraw') {
             badge = `<span class="text-rose-400 font-bold">➖ سحب</span>`;
-            desc = `سحب`;
+            desc = selectedHistoryAccId === 'ALL' ? `من ${targetAccName}` : `سحب`;
           } else {
-            if (h.fromId === currentAcc.id) {
+            if (currentAcc && (h.fromId === currentAcc.id || h.fromName === currentAcc.name)) {
               badge = `<span class="text-sky-400 font-bold">🔄 نقل صادر</span>`;
               desc = `إلى ${escapeHtml(h.toName)}`;
-            } else {
+            } else if (currentAcc) {
               badge = `<span class="text-emerald-400 font-bold">🔄 نقل وارد</span>`;
               desc = `من ${escapeHtml(h.fromName)}`;
+            } else {
+              badge = `<span class="text-sky-400 font-bold">🔄 نقل</span>`;
+              desc = `من ${escapeHtml(h.fromName)} إلى ${escapeHtml(h.toName)}`;
             }
           }
 
-          const opNumHtml = h.opNumber ? `<span class="text-sky-300 font-semibold bg-sky-500/10 px-2 py-0.5 rounded text-[10px] num-font">🔢 #${escapeHtml(h.opNumber)}</span>` : '';
+          const refValue = h.opNumber || h.note || '';
+          const opNumHtml = refValue ? `<span class="text-sky-300 font-semibold bg-sky-500/10 px-2 py-0.5 rounded text-[10px] num-font">🔢 #${escapeHtml(refValue)}</span>` : '';
 
           dayHtml += `
             <div class="bg-slate-900 border border-slate-800/70 rounded-lg px-2.5 py-2 flex items-center justify-between text-xs gap-2">
@@ -787,16 +848,16 @@
       const item = state.history.find(h => h.id === id);
       if (!item) return;
 
-      if (item.type === 'deposit' || item.type === 'return_deposit' || item.type === 'withdraw' || item.type === 'temp_withdraw') {
-        const acc = state.accounts.find(a => a.id === item.accountId);
+      if (item.type === 'deposit' || item.type === 'return_deposit' || item.type === 'topup' || item.type === 'withdraw' || item.type === 'temp_withdraw') {
+        const acc = state.accounts.find(a => a.id === item.accountId || a.name === item.accountName);
         if (acc) {
-          const reverseDelta = (item.type === 'deposit' || item.type === 'return_deposit') ? -item.amount : item.amount;
+          const reverseDelta = (item.type === 'deposit' || item.type === 'return_deposit' || item.type === 'topup') ? -item.amount : item.amount;
           if (item.currency === 'USD') acc.usd = Number((Number(acc.usd || 0) + reverseDelta).toFixed(2));
           else acc.syp = Math.round(Number(acc.syp || 0) + reverseDelta);
         }
       } else if (item.type === 'transfer') {
-        const fromAcc = state.accounts.find(a => a.id === item.fromId);
-        const toAcc = state.accounts.find(a => a.id === item.toId);
+        const fromAcc = state.accounts.find(a => a.id === item.fromId || a.name === item.fromName);
+        const toAcc = state.accounts.find(a => a.id === item.toId || a.name === item.toName);
         if (fromAcc) {
           if (item.currency === 'USD') fromAcc.usd = Number((Number(fromAcc.usd || 0) + item.amount).toFixed(2));
           else fromAcc.syp = Math.round(Number(fromAcc.syp || 0) + item.amount);
@@ -812,13 +873,14 @@
       showToast('تم التراجع عن العملية');
     });
 
+    // تأكيد قبل المسح حتى لا ينحذف السجل بالخطأ أبداً
     document.getElementById('clearHistoryBtn').addEventListener('click', () => {
+      if (!confirm('هل أنت متأكد من مسح سجل العمليات بالكامل؟')) return;
       state.history = [];
       saveState(); renderHistory();
       showToast('تم مسح السجل');
     });
 
-    // التصدير يعرض العمليات الصافية فقط (يتجاهل السحب المؤقت والاسترداد حتى لا يظهر في كشف الشركة)
     document.getElementById('exportReportBtn').addEventListener('click', () => {
       let totalUsd = 0, totalSyp = 0;
       getActiveAccounts().forEach(a => {
@@ -844,12 +906,9 @@
 
       reportText += "--- سجل العمليات مفصلاً حسب الحسابات والأيام ---\n";
       getActiveAccounts().forEach(acc => {
-        // استثناء السحوبات المؤقتة والاستردادات من التقرير المصدّر ليبقى التقرير نظيفاً
         const accItems = (state.history || []).filter(h => {
           if (h.type === 'return_deposit' || h.type === 'temp_withdraw' || h.isReturn || h.isTemp) return false;
-          if (h.type === 'deposit' || h.type === 'withdraw') return h.accountId === acc.id;
-          if (h.type === 'transfer') return h.fromId === acc.id || h.toId === acc.id;
-          return false;
+          return doesItemBelongToAccount(h, acc);
         });
 
         reportText += `\n[ حساب: ${acc.name} ] (إجمالي العمليات: ${accItems.length})\n`;
@@ -857,7 +916,7 @@
 
         const dayMap = {};
         accItems.forEach(h => {
-          const ts = Number(h.id.replace('h_', '')) || Date.now();
+          const ts = Number(String(h.id || '').replace('h_', '')) || Date.now();
           const dateObj = new Date(ts);
           const dateStr = h.date || dateObj.toLocaleDateString('en-CA');
           if (!dayMap[dateStr]) dayMap[dateStr] = [];
@@ -878,13 +937,14 @@
           reportText += `     التفاصيل:\n`;
 
           dayOps.forEach((h, idx) => {
-            const opNumStr = h.opNumber ? ` [رقم العملية: #${h.opNumber}]` : '';
+            const refVal = h.opNumber || h.note || '';
+            const opNumStr = refVal ? ` [رقم العملية: #${refVal}]` : '';
             if (h.type === 'deposit') {
               reportText += `       ${idx + 1}. [إيداع] ${h.timeStr} - المبلغ: ${h.amount} ${h.currency}${opNumStr}\n`;
             } else if (h.type === 'withdraw') {
               reportText += `       ${idx + 1}. [سحب] ${h.timeStr} - المبلغ: ${h.amount} ${h.currency}${opNumStr}\n`;
             } else {
-              const dir = h.fromId === acc.id ? `إلى ${h.toName}` : `من ${h.fromName}`;
+              const dir = (h.fromId === acc.id || h.fromName === acc.name) ? `إلى ${h.toName}` : `من ${h.fromName}`;
               reportText += `       ${idx + 1}. [نقل] ${h.timeStr} - المبلغ: ${h.amount} ${h.currency} (${dir})${opNumStr}\n`;
             }
           });
@@ -906,19 +966,7 @@
     });
 
     renderAll();
-    if (dbConfig.dbUrl) {
-      fetch(`${dbConfig.dbUrl.trim().replace(/\/+$/, '')}/shamcash_${encodeURIComponent(dbConfig.secretKey || 'my_balances')}.json`)
-        .then(res => res.json())
-        .then(data => {
-          if (data && Array.isArray(data.accounts)) {
-            state.accounts = data.accounts;
-            state.history = Array.isArray(data.history) ? data.history : [];
-            if (data.companyOwedUsd !== undefined) state.companyOwedUsd = Number(data.companyOwedUsd) || 0;
-            if (data.companyOwedSyp !== undefined) state.companyOwedSyp = Number(data.companyOwedSyp) || 0;
-            renderAll();
-          }
-        }).catch(e => {});
-    }
+    pullStateFromCloud(false);
   </script>
 </body>
 </html>
