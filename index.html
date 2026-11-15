@@ -49,17 +49,31 @@
     <!-- 1. لوحة الملخص المدمجة بالأعلى -->
     <section class="bg-gradient-to-br from-slate-900 to-slate-950 border border-emerald-500/40 rounded-2xl p-4 shadow-xl space-y-3">
       
-      <!-- الرصيد الكلي (مجموع أرصدة الحسابات) -->
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <div>
-          <span class="text-[11px] font-bold text-slate-400 block">إجمالي أرصدة الحسابات المفعلة</span>
-          <div class="flex items-center gap-3 mt-0.5">
-            <span id="totalUsdDisplay" class="text-xl sm:text-2xl font-extrabold text-emerald-400 num-font">$0</span>
-            <span class="text-slate-600">|</span>
-            <span id="totalSypDisplay" class="text-lg sm:text-xl font-extrabold text-amber-400 num-font">0 SYP</span>
+      <!-- الرصيد الكلي الفعلي + الرصيد المفترض مع السحوبات المؤقتة -->
+      <div class="border-b border-slate-800 pb-3 space-y-2">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="text-[11px] font-bold text-slate-400 block">إجمالي أرصدة الحسابات المفعلة (الفعلي حالياً)</span>
+            <div class="flex items-center gap-3 mt-0.5">
+              <span id="totalUsdDisplay" class="text-xl sm:text-2xl font-extrabold text-emerald-400 num-font">$0</span>
+              <span class="text-slate-600">|</span>
+              <span id="totalSypDisplay" class="text-lg sm:text-xl font-extrabold text-amber-400 num-font">0 SYP</span>
+            </div>
+          </div>
+          <span id="activeAccountsBadge" class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">0 حسابات</span>
+        </div>
+
+        <!-- شريط يظهر فقط في حال وجود سحب مؤقت لم يتم استرداده بعد -->
+        <div id="tempHoldSummaryBox" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-2 flex items-center justify-between flex-wrap gap-2 text-[11px]">
+          <div class="text-amber-300 font-bold">
+            <span>⏳ مسحوب مؤقتاً (غير مسترد): </span>
+            <span id="tempHoldAmountDisplay" class="num-font font-extrabold text-white">$0</span>
+          </div>
+          <div class="text-slate-300 font-semibold">
+            <span>الرصيد الكلي الأصلي المفترض: </span>
+            <span id="expectedTotalDisplay" class="num-font font-extrabold text-emerald-300">$0</span>
           </div>
         </div>
-        <span id="activeAccountsBadge" class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">0 حسابات</span>
       </div>
 
       <!-- خانة: لنا من الشركة (تعديل يدوي مستقل تماماً ولا يؤثر على أي مجموع) -->
@@ -91,11 +105,11 @@
         <div id="activeAccountsList" class="grid grid-cols-1 gap-1.5"></div>
       </div>
 
-      <!-- إجمالي الإيداعات والسحوبات الكلية -->
+      <!-- إجمالي الإيداعات والسحوبات الكلية الصافية -->
       <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80">
         <div class="bg-slate-950/70 border border-emerald-500/20 rounded-xl p-2.5 flex items-center justify-between">
           <div>
-            <span class="text-[10px] text-slate-400 block">إجمالي الوارد</span>
+            <span class="text-[10px] text-slate-400 block">إجمالي الوارد (الصافي)</span>
             <span id="allTimeTotalDepositsUsd" class="text-xs font-extrabold text-emerald-400 num-font block">$0</span>
             <span id="allTimeTotalDepositsSyp" class="text-[10px] font-bold text-emerald-300 num-font block">0 SYP</span>
           </div>
@@ -103,7 +117,7 @@
         </div>
         <div class="bg-slate-950/70 border border-rose-500/20 rounded-xl p-2.5 flex items-center justify-between">
           <div>
-            <span class="text-[10px] text-slate-400 block">إجمالي الصادر</span>
+            <span class="text-[10px] text-slate-400 block">إجمالي الصادر (الصافي)</span>
             <span id="allTimeTotalWithdrawsUsd" class="text-xs font-extrabold text-rose-400 num-font block">$0</span>
             <span id="allTimeTotalWithdrawsSyp" class="text-[10px] font-bold text-rose-300 num-font block">0 SYP</span>
           </div>
@@ -163,11 +177,19 @@
           <input id="opOpNumber" type="text" placeholder="مثال: 1024 أو رقم الإيصال..." class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:outline-none px-3 py-2 text-xs text-white num-font" />
         </div>
 
-        <!-- خيار إعادة رصيد مسحوب سابقاً لعدم تكراره في إجمالي الإيداعات -->
+        <!-- خيار إعادة رصيد مسحوب سابقاً (يظهر في وضع الإيداع) -->
         <div id="returnDepositOptionBox" class="bg-slate-950/90 border border-amber-500/30 rounded-xl px-3 py-2.5">
           <label class="flex items-center gap-2 cursor-pointer select-none">
             <input id="isReturnDepositCheckbox" type="checkbox" class="w-4 h-4 rounded accent-amber-500 cursor-pointer" />
-            <span class="text-[11px] font-bold text-amber-300">↩️ استرداد مبلغ مسحوب سابقاً (يُضاف للرصيد فقط ولا يُضاف لإجمالي الوارد)</span>
+            <span class="text-[11px] font-bold text-amber-300">↩️ استرداد مبلغ مسحوب سابقاً (يرجع للرصيد فقط ولا يُضاف لإجمالي الوارد)</span>
+          </label>
+        </div>
+
+        <!-- خيار سحب مؤقت خاص بي (يظهر في وضع السحب) -->
+        <div id="tempWithdrawOptionBox" class="hidden bg-slate-950/90 border border-amber-500/30 rounded-xl px-3 py-2.5">
+          <label class="flex items-center gap-2 cursor-pointer select-none">
+            <input id="isTempWithdrawCheckbox" type="checkbox" class="w-4 h-4 rounded accent-amber-500 cursor-pointer" />
+            <span class="text-[11px] font-bold text-amber-300">⏳ سحب مؤقت سأعيده لاحقاً (ينقص من الرصيد الفعلي فقط ولا يُضاف لإجمالي الصادر)</span>
           </label>
         </div>
 
@@ -283,263 +305,3 @@
       try {
         const res = await fetch(endpoint);
         if (res.ok) {
-          const data = await res.json();
-          if (data && Array.isArray(data.accounts)) {
-            state.accounts = data.accounts;
-            state.history = Array.isArray(data.history) ? data.history : [];
-            if (data.companyOwedUsd !== undefined) state.companyOwedUsd = Number(data.companyOwedUsd) || 0;
-            if (data.companyOwedSyp !== undefined) state.companyOwedSyp = Number(data.companyOwedSyp) || 0;
-            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
-            renderAll();
-          }
-        }
-      } catch (e) {}
-    }
-
-    function saveState() {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
-      pushStateToCloud();
-    }
-
-    function showToast(msg) {
-      const box = document.getElementById('toastBox');
-      document.getElementById('toastText').textContent = msg;
-      box.classList.remove('hidden');
-      if (window._toastTimer) clearTimeout(window._toastTimer);
-      window._toastTimer = setTimeout(() => box.classList.add('hidden'), 2500);
-    }
-
-    function formatUsd(val) {
-      const n = Number(val) || 0;
-      const sign = n < 0 ? '-' : '';
-      return sign + '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-    }
-
-    function formatSyp(val) {
-      const n = Number(val) || 0;
-      return n.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' SYP';
-    }
-
-    function escapeHtml(str) {
-      return String(str || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    }
-
-    function getActiveAccounts() {
-      return state.accounts.filter(a => a.active);
-    }
-
-    function renderAll() {
-      renderTopAndActiveAccounts();
-      renderAccountSelects();
-      renderHistory();
-    }
-
-    function renderTopAndActiveAccounts() {
-      const activeAccs = getActiveAccounts();
-      let totalUsd = 0;
-      let totalSyp = 0;
-
-      activeAccs.forEach(a => {
-        totalUsd += Number(a.usd) || 0;
-        totalSyp += Number(a.syp) || 0;
-      });
-
-      document.getElementById('totalUsdDisplay').textContent = formatUsd(totalUsd);
-      document.getElementById('totalSypDisplay').textContent = formatSyp(totalSyp);
-      document.getElementById('activeAccountsBadge').textContent = `${activeAccs.length} حسابات`;
-
-      const owedUsd = Number(state.companyOwedUsd) || 0;
-      const owedSyp = Number(state.companyOwedSyp) || 0;
-
-      const usdInput = document.getElementById('companyOwedUsdInput');
-      const sypInput = document.getElementById('companyOwedSypInput');
-      if (document.activeElement !== usdInput) usdInput.value = owedUsd || '';
-      if (document.activeElement !== sypInput) sypInput.value = owedSyp || '';
-
-      // حساب إجمالي الإيداعات الحقيقية فقط (تجاهل عمليات استرداد الرصيد حتى لا تتكرر مرتين)
-      let depUsd = 0, depSyp = 0, wdUsd = 0, wdSyp = 0;
-      (state.history || []).forEach(h => {
-        const amt = Number(h.amount) || 0;
-        if (h.type === 'deposit' && !h.isReturn) {
-          if (h.currency === 'USD') depUsd += amt; else depSyp += amt;
-        } else if (h.type === 'withdraw') {
-          if (h.currency === 'USD') wdUsd += amt; else wdSyp += amt;
-        }
-      });
-
-      document.getElementById('allTimeTotalDepositsUsd').textContent = formatUsd(depUsd);
-      document.getElementById('allTimeTotalDepositsSyp').textContent = formatSyp(depSyp);
-      document.getElementById('allTimeTotalWithdrawsUsd').textContent = formatUsd(wdUsd);
-      document.getElementById('allTimeTotalWithdrawsSyp').textContent = formatSyp(wdSyp);
-
-      const list = document.getElementById('activeAccountsList');
-      list.innerHTML = '';
-
-      if (activeAccs.length === 0) {
-        list.innerHTML = `<div class="bg-slate-950/70 border border-dashed border-slate-800 rounded-xl p-2 text-center text-[11px] text-slate-400">لا توجد حسابات مفعلة.</div>`;
-        return;
-      }
-
-      activeAccs.forEach(acc => {
-        const row = document.createElement('div');
-        row.className = 'bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 flex items-center justify-between gap-2';
-        row.innerHTML = `
-          <div class="flex items-center gap-1.5">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-            <span class="text-xs font-bold text-white">${escapeHtml(acc.name)}</span>
-          </div>
-          <div class="flex items-center gap-2.5 text-xs">
-            <span class="font-extrabold text-emerald-400 num-font">${formatUsd(acc.usd)}</span>
-            <span class="text-slate-600">|</span>
-            <span class="font-extrabold text-amber-400 num-font">${formatSyp(acc.syp)}</span>
-          </div>
-        `;
-        list.appendChild(row);
-      });
-    }
-
-    function handleCompanyOwedChange(showNotification) {
-      const valUsd = parseFloat(document.getElementById('companyOwedUsdInput').value) || 0;
-      const valSyp = parseFloat(document.getElementById('companyOwedSypInput').value) || 0;
-      state.companyOwedUsd = valUsd;
-      state.companyOwedSyp = valSyp;
-      saveState();
-      if (showNotification) showToast('تم حفظ مبلغ (لنا من الشركة) ✓');
-    }
-
-    document.getElementById('companyOwedUsdInput').addEventListener('input', () => handleCompanyOwedChange(false));
-    document.getElementById('companyOwedSypInput').addEventListener('input', () => handleCompanyOwedChange(false));
-    document.getElementById('saveCompanyOwedBtn').addEventListener('click', () => handleCompanyOwedChange(true));
-
-    function renderAccountSelects() {
-      const activeAccs = getActiveAccounts();
-      const opSel = document.getElementById('opAccount');
-      const fromSel = document.getElementById('fromAccount');
-      const toSel = document.getElementById('toAccount');
-
-      const prevOp = opSel.value;
-      const prevFrom = fromSel.value;
-      const prevTo = toSel.value;
-
-      opSel.innerHTML = '';
-      fromSel.innerHTML = '';
-      toSel.innerHTML = '';
-
-      activeAccs.forEach(acc => {
-        const label = `${acc.name} (${formatUsd(acc.usd)} | ${formatSyp(acc.syp)})`;
-        const o1 = document.createElement('option'); o1.value = acc.id; o1.textContent = label; opSel.appendChild(o1);
-        const o2 = document.createElement('option'); o2.value = acc.id; o2.textContent = label; fromSel.appendChild(o2);
-        const o3 = document.createElement('option'); o3.value = acc.id; o3.textContent = label; toSel.appendChild(o3);
-      });
-
-      if (prevOp && activeAccs.some(a => a.id === prevOp)) opSel.value = prevOp;
-      if (prevFrom && activeAccs.some(a => a.id === prevFrom)) fromSel.value = prevFrom;
-      if (prevTo && activeAccs.some(a => a.id === prevTo)) {
-        toSel.value = prevTo;
-      } else if (activeAccs.length > 1) {
-        toSel.value = activeAccs[1].id;
-      }
-    }
-
-    function renderHistory() {
-      const tabsContainer = document.getElementById('accountTabsContainer');
-      const container = document.getElementById('accountsHistoryContainer');
-      tabsContainer.innerHTML = '';
-      container.innerHTML = '';
-
-      const activeAccs = getActiveAccounts();
-
-      if (!activeAccs || activeAccs.length === 0) {
-        container.innerHTML = `<div class="text-[11px] text-slate-500 text-center py-2">لا توجد حسابات مفعلة لعرض سجلها</div>`;
-        return;
-      }
-
-      if (!selectedHistoryAccId || !activeAccs.some(a => a.id === selectedHistoryAccId)) {
-        selectedHistoryAccId = activeAccs[0].id;
-      }
-
-      activeAccs.forEach(acc => {
-        const accCount = (state.history || []).filter(h => {
-          if (h.type === 'deposit' || h.type === 'withdraw' || h.type === 'return_deposit') return h.accountId === acc.id;
-          if (h.type === 'transfer') return h.fromId === acc.id || h.toId === acc.id;
-          return false;
-        }).length;
-
-        const isSelected = acc.id === selectedHistoryAccId;
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.setAttribute('data-tab-acc-id', acc.id);
-        btn.className = isSelected
-          ? 'px-3 py-1.5 rounded-xl text-xs font-extrabold bg-sky-600 text-white shadow flex items-center gap-1.5 whitespace-nowrap transition'
-          : 'px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-950 text-slate-400 hover:text-white border border-slate-800 flex items-center gap-1.5 whitespace-nowrap transition';
-
-        btn.innerHTML = `
-          <span>📁 ${escapeHtml(acc.name)}</span>
-          <span class="text-[10px] px-1.5 py-0.5 rounded-full ${isSelected ? 'bg-sky-700 text-sky-100' : 'bg-slate-900 text-slate-400'}">${accCount}</span>
-        `;
-        tabsContainer.appendChild(btn);
-      });
-
-      const currentAcc = activeAccs.find(a => a.id === selectedHistoryAccId);
-      if (!currentAcc) return;
-
-      const q = searchQuery.trim().toLowerCase();
-      const accItems = (state.history || []).filter(h => {
-        const belongsToAcc = (h.type === 'deposit' || h.type === 'withdraw' || h.type === 'return_deposit')
-          ? h.accountId === currentAcc.id
-          : (h.type === 'transfer' && (h.fromId === currentAcc.id || h.toId === currentAcc.id));
-
-        if (!belongsToAcc) return false;
-        if (!q) return true;
-
-        const opNumMatch = String(h.opNumber || '').toLowerCase().includes(q);
-        const amountMatch = String(h.amount || '').toLowerCase().includes(q);
-        return opNumMatch || amountMatch;
-      });
-
-      if (accItems.length === 0) {
-        container.innerHTML = `<div class="bg-slate-950/70 border border-slate-800 rounded-xl p-4 text-[11px] text-slate-400 text-center">
-          ${q ? 'لا توجد عمليات مطابقة لبحثك في هذا الحساب' : 'لا توجد حركات مسجلة لهذا الحساب بعد'}
-        </div>`;
-        return;
-      }
-
-      const daysMap = {};
-      accItems.forEach(h => {
-        const ts = Number(h.id.replace('h_', '')) || Date.now();
-        const dateObj = new Date(ts);
-        const dateStr = h.date || dateObj.toLocaleDateString('en-CA');
-        if (!daysMap[dateStr]) daysMap[dateStr] = [];
-        daysMap[dateStr].push({
-          ...h,
-          timeStr: dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
-        });
-      });
-
-      const sortedDays = Object.keys(daysMap).sort().reverse();
-
-      sortedDays.forEach(day => {
-        const dayItems = daysMap[day];
-        const dayBox = document.createElement('div');
-        dayBox.className = 'bg-slate-950/80 border border-slate-800 rounded-xl p-3 space-y-2';
-
-        let dayHtml = `
-          <div class="flex items-center justify-between text-[11px] text-sky-400 font-bold border-b border-slate-800 pb-1.5">
-            <span>📅 تاريخ اليوم: ${day}</span>
-            <span class="text-[10px] bg-slate-900 px-2 py-0.5 rounded text-slate-400">${dayItems.length} حركات</span>
-          </div>
-          <div class="space-y-1.5">
-        `;
-
-        dayItems.forEach(h => {
-          const amountStr = h.currency === 'USD' ? formatUsd(h.amount) : formatSyp(h.amount);
-          let badge = '', desc = '';
-
-          if (h.type === 'return_deposit' || (h.type === 'deposit' && h.isReturn)) {
-            badge = `<span class="text-amber-400 font-bold">↩️ استرداد رصيد</span>`;
-            desc = `إعادة مسحوب - لا يُحسب بالوارد`;
-          } else if (
