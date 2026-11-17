@@ -91,7 +91,7 @@
         <div id="activeAccountsList" class="grid grid-cols-1 gap-1.5"></div>
       </div>
 
-      <!-- إجمالي الإيداعات والسحوبات الكلية (تبدأ من الصفر صافي) -->
+      <!-- إجمالي الإيداعات والسحوبات الكلية -->
       <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80">
         <div class="bg-slate-950/70 border border-emerald-500/20 rounded-xl p-2.5 flex items-center justify-between">
           <div>
@@ -113,7 +113,7 @@
 
     </section>
 
-    <!-- 2. خانة العمليات السريعة -->
+    <!-- 2. خانة العمليات السريعة (مع الاحتفاظ بالتاريخ المختار) -->
     <section class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
       <div class="grid grid-cols-3 bg-slate-950/70 p-1 gap-1 border-b border-slate-800">
         <button id="modeDepositBtn" type="button" class="py-2 px-1 rounded-xl text-xs font-bold transition bg-emerald-600 text-white shadow">
@@ -128,12 +128,16 @@
       </div>
 
       <form id="operationForm" class="p-4 space-y-3">
+        <!-- خانة التاريخ مع زر "اليوم" السريع -->
         <div class="bg-slate-950/90 border border-sky-500/30 rounded-xl p-2.5 flex items-center justify-between gap-2">
           <label for="opDate" class="text-xs font-bold text-sky-300 flex items-center gap-1.5">
             <span>📅</span>
             <span>تاريخ العملية:</span>
           </label>
-          <input id="opDate" type="date" class="rounded-lg bg-slate-900 border border-slate-700 text-xs font-bold text-white px-2.5 py-1.5 num-font focus:border-sky-500 focus:outline-none" />
+          <div class="flex items-center gap-1.5">
+            <input id="opDate" type="date" class="rounded-lg bg-slate-900 border border-slate-700 text-xs font-bold text-white px-2.5 py-1.5 num-font focus:border-sky-500 focus:outline-none" />
+            <button id="setTodayBtn" type="button" class="text-[10px] font-bold bg-sky-600/30 hover:bg-sky-600/50 text-sky-200 px-2 py-1.5 rounded-lg transition" title="الرجوع لتاريخ اليوم">اليوم</button>
+          </div>
         </div>
 
         <div class="grid grid-cols-3 gap-2.5">
@@ -662,14 +666,21 @@
     document.getElementById('modeTransferBtn').addEventListener('click', () => setMode('transfer'));
 
     const todayStr = new Date().toLocaleDateString('en-CA');
-    document.getElementById('opDate').value = todayStr;
+    const opDateInput = document.getElementById('opDate');
+    opDateInput.value = todayStr;
     document.getElementById('exportDateInput').value = todayStr;
+
+    // زر "اليوم" السريع ليعيد التاريخ لتاريخ اليوم بضغطة واحدة
+    document.getElementById('setTodayBtn').addEventListener('click', () => {
+      opDateInput.value = todayStr;
+      showToast('تم العودة لتاريخ اليوم');
+    });
 
     document.getElementById('operationForm').addEventListener('submit', e => {
       e.preventDefault();
       const amount = parseFloat(document.getElementById('opAmount').value);
       const currency = document.getElementById('opCurrency').value;
-      const opDate = document.getElementById('opDate').value || todayStr;
+      const opDate = opDateInput.value || todayStr; // يبقى التاريخ محتفظاً بقيمته التي أدخلها المستخدم لتسهيل إدخال عمليات متتالية لنفس اليوم القديم
       const opNumber = document.getElementById('opOpNumber').value.trim().replace(/^#+/, '');
       const excludeFromTotal = document.getElementById('excludeFromTotalCheckbox').checked;
       if (!amount || amount <= 0) return;
@@ -743,7 +754,7 @@
       document.getElementById('opOpNumber').value = '';
       document.getElementById('excludeFromTotalCheckbox').checked = false;
       document.getElementById('opCurrency').value = 'USD';
-      document.getElementById('opDate').value = todayStr;
+      // ملاحظة: لا نعيد تعيين opDate هنا لكي يبقى الحقل على نفس التاريخ القديم لتسهيل إدخال عدة عمليات متتالية بنفس التاريخ!
     });
 
     document.getElementById('accountsHistoryContainer').addEventListener('click', e => {
