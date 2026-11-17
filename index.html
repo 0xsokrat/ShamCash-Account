@@ -40,52 +40,11 @@
     <!-- شريط العنوان وزر الإعدادات -->
     <div class="flex items-center justify-between gap-2">
       <h1 class="text-base font-extrabold text-white">لوحة الأرصدة والحسابات</h1>
-      <div class="flex items-center gap-1.5">
-        <button id="openTotalsModalBtn" type="button" class="px-2.5 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-[11px] font-bold text-emerald-300 flex items-center gap-1 transition">
-          <span>🧮</span>
-          <span>ضبط الإجماليات والبداية</span>
-        </button>
-        <a href="settings.html" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1.5 transition">
-          <span>⚙️</span>
-          <span>الإعدادات</span>
-        </a>
-      </div>
+      <a href="settings.html" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1.5 transition">
+        <span>⚙️</span>
+        <span>الإعدادات</span>
+      </a>
     </div>
-
-    <!-- نافذة إعدادات الإيداعات والسحوبات السابقة -->
-    <section id="totalsSettingsModal" class="hidden bg-slate-900 border-2 border-emerald-500/50 rounded-2xl p-4 shadow-2xl space-y-3">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-        <h2 class="text-xs font-extrabold text-emerald-400">⚙️ ضبط أرصدة البداية (إيداعات وسحوبات سابقة)</h2>
-        <button id="closeTotalsModalBtn" type="button" class="text-xs text-slate-400 hover:text-white font-bold px-2 py-0.5 rounded bg-slate-800">إغلاق ✕</button>
-      </div>
-
-      <div class="space-y-3 bg-slate-950/90 border border-slate-800 rounded-xl p-3">
-        <div class="grid grid-cols-2 gap-2.5">
-          <div>
-            <label class="text-[10px] text-slate-400 block mb-0.5">إيداعات سابقة ($)</label>
-            <input id="initialDepositUsdInput" type="number" step="any" placeholder="8234" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-sm font-extrabold text-emerald-400 num-font" />
-          </div>
-          <div>
-            <label class="text-[10px] text-slate-400 block mb-0.5">إيداعات سابقة (SYP)</label>
-            <input id="initialDepositSypInput" type="number" step="any" placeholder="0" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-sm font-extrabold text-amber-400 num-font" />
-          </div>
-        </div>
-        <div class="grid grid-cols-2 gap-2.5 pt-2 border-t border-slate-800/80">
-          <div>
-            <label class="text-[10px] text-slate-400 block mb-0.5">سحوبات سابقة ($)</label>
-            <input id="initialWithdrawUsdInput" type="number" step="any" placeholder="5410" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-sm font-extrabold text-rose-400 num-font" />
-          </div>
-          <div>
-            <label class="text-[10px] text-slate-400 block mb-0.5">سحوبات سابقة (SYP)</label>
-            <input id="initialWithdrawSypInput" type="number" step="any" placeholder="0" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1.5 text-sm font-extrabold text-amber-400 num-font" />
-          </div>
-        </div>
-      </div>
-
-      <button id="saveTotalsSettingsBtn" type="button" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg transition">
-        حفظ واعتماد الأرصدة السابقة ✓
-      </button>
-    </section>
 
     <!-- 1. لوحة الملخص المدمجة بالأعلى -->
     <section class="bg-gradient-to-br from-slate-900 to-slate-950 border border-emerald-500/40 rounded-2xl p-4 shadow-xl space-y-3">
@@ -139,7 +98,6 @@
             <span class="text-[10px] text-slate-400 block">إجمالي الإيداعات</span>
             <span id="allTimeTotalDepositsUsd" class="text-sm font-extrabold text-emerald-400 num-font block mt-0.5">$0</span>
             <span id="allTimeTotalDepositsSyp" class="text-[10px] font-bold text-emerald-300 num-font block">0 SYP</span>
-            <span class="text-[9px] text-slate-500 block mt-0.5">شامل $8,234 سابقة</span>
           </div>
           <span class="text-xs">➕</span>
         </div>
@@ -148,7 +106,6 @@
             <span class="text-[10px] text-slate-400 block">إجمالي السحوبات</span>
             <span id="allTimeTotalWithdrawsUsd" class="text-sm font-extrabold text-rose-400 num-font block mt-0.5">$0</span>
             <span id="allTimeTotalWithdrawsSyp" class="text-[10px] font-bold text-rose-300 num-font block">0 SYP</span>
-            <span class="text-[9px] text-slate-500 block mt-0.5">شامل $5,410 سابقة</span>
           </div>
           <span class="text-xs">➖</span>
         </div>
@@ -156,7 +113,7 @@
 
     </section>
 
-    <!-- 2. خانة العمليات السريعة (إيداع، سحب، نقل) -->
+    <!-- 2. خانة العمليات السريعة (مع خانة اختيار التاريخ القديم) -->
     <section class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
       <div class="grid grid-cols-3 bg-slate-950/70 p-1 gap-1 border-b border-slate-800">
         <button id="modeDepositBtn" type="button" class="py-2 px-1 rounded-xl text-xs font-bold transition bg-emerald-600 text-white shadow">
@@ -171,6 +128,15 @@
       </div>
 
       <form id="operationForm" class="p-4 space-y-3">
+        <!-- خانة اختيار تاريخ العملية (تاريخ سابقة أو اليوم) -->
+        <div class="bg-slate-950/90 border border-sky-500/30 rounded-xl p-2.5 flex items-center justify-between gap-2">
+          <label for="opDate" class="text-xs font-bold text-sky-300 flex items-center gap-1.5">
+            <span>📅</span>
+            <span>تاريخ العملية:</span>
+          </label>
+          <input id="opDate" type="date" class="rounded-lg bg-slate-900 border border-slate-700 text-xs font-bold text-white px-2.5 py-1.5 num-font focus:border-sky-500 focus:outline-none" />
+        </div>
+
         <div class="grid grid-cols-3 gap-2.5">
           <div class="col-span-2">
             <label for="opAmount" class="block text-[11px] font-bold text-slate-300 mb-1">المبلغ</label>
@@ -219,12 +185,11 @@
       </form>
     </section>
 
-    <!-- 3. السجل التفاعلي مع اختيار تاريخ لتصدير يوم محدد -->
+    <!-- 3. السجل التفاعلي -->
     <section class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-3 shadow-lg">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2.5 flex-wrap gap-2">
         <h2 class="text-xs font-bold text-slate-200">📜 سجل العمليات حسب الحساب</h2>
         <div class="flex items-center gap-1.5 flex-wrap">
-          <!-- اختيار التاريخ المخصص لتصدير تقرير اليوم -->
           <input id="exportDateInput" type="date" class="rounded-lg bg-slate-950 border border-slate-700 text-[11px] text-white px-2 py-1 num-font" title="اختر اليوم للتصدير" />
           <button id="exportReportBtn" type="button" class="px-2.5 py-1 rounded-lg bg-sky-600 hover:bg-sky-500 text-[10px] font-bold text-white transition">
             📥 تصدير تقرير اليوم المختار
@@ -257,15 +222,15 @@
 
     const defaultState = {
       accounts: [
-        { id: 'acc_1', name: 'حساب 1', usd: 1500, syp: 10000000, active: true },
-        { id: 'acc_2', name: 'حساب 2', usd: 500, syp: 5000000, active: true }
+        { id: 'acc_1', name: 'حساب 1', usd: 0, syp: 0, active: true },
+        { id: 'acc_2', name: 'حساب 2', usd: 0, syp: 0, active: true }
       ],
       history: [],
       companyOwedUsd: 0,
       companyOwedSyp: 0,
-      initialDepositUsd: 8234,
+      initialDepositUsd: 0,
       initialDepositSyp: 0,
-      initialWithdrawUsd: 5410,
+      initialWithdrawUsd: 0,
       initialWithdrawSyp: 0
     };
 
@@ -284,23 +249,10 @@
             parsed.history = Array.isArray(parsed.history) ? parsed.history : [];
             parsed.companyOwedUsd = Number(parsed.companyOwedUsd) || 0;
             parsed.companyOwedSyp = Number(parsed.companyOwedSyp) || 0;
-            parsed.initialDepositUsd = parsed.initialDepositUsd !== undefined ? Number(parsed.initialDepositUsd) : 8234;
+            parsed.initialDepositUsd = Number(parsed.initialDepositUsd) || 0;
             parsed.initialDepositSyp = Number(parsed.initialDepositSyp) || 0;
-            parsed.initialWithdrawUsd = parsed.initialWithdrawUsd !== undefined ? Number(parsed.initialWithdrawUsd) : 5410;
+            parsed.initialWithdrawUsd = Number(parsed.initialWithdrawUsd) || 0;
             parsed.initialWithdrawSyp = Number(parsed.initialWithdrawSyp) || 0;
-
-            if (parsed.history.length === 0) {
-              for (const k of OLD_KEYS) {
-                const oldRaw = localStorage.getItem(k);
-                if (oldRaw) {
-                  const oldParsed = JSON.parse(oldRaw);
-                  if (oldParsed && Array.isArray(oldParsed.history) && oldParsed.history.length > 0) {
-                    parsed.history = oldParsed.history;
-                    break;
-                  }
-                }
-              }
-            }
             return parsed;
           }
         }
@@ -358,10 +310,10 @@
 
             if (data.companyOwedUsd !== undefined) state.companyOwedUsd = Number(data.companyOwedUsd) || 0;
             if (data.companyOwedSyp !== undefined) state.companyOwedSyp = Number(data.companyOwedSyp) || 0;
-            if (data.initialDepositUsd !== undefined) state.initialDepositUsd = Number(data.initialDepositUsd);
-            if (data.initialDepositSyp !== undefined) state.initialDepositSyp = Number(data.initialDepositSyp);
-            if (data.initialWithdrawUsd !== undefined) state.initialWithdrawUsd = Number(data.initialWithdrawUsd);
-            if (data.initialWithdrawSyp !== undefined) state.initialWithdrawSyp = Number(data.initialWithdrawSyp);
+            if (data.initialDepositUsd !== undefined) state.initialDepositUsd = Number(data.initialDepositUsd) || 0;
+            if (data.initialDepositSyp !== undefined) state.initialDepositSyp = Number(data.initialDepositSyp) || 0;
+            if (data.initialWithdrawUsd !== undefined) state.initialWithdrawUsd = Number(data.initialWithdrawUsd) || 0;
+            if (data.initialWithdrawSyp !== undefined) state.initialWithdrawSyp = Number(data.initialWithdrawSyp) || 0;
             try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
             renderAll();
           }
@@ -512,31 +464,6 @@
     document.getElementById('companyOwedSypInput').addEventListener('input', () => handleCompanyOwedChange(false));
     document.getElementById('saveCompanyOwedBtn').addEventListener('click', () => handleCompanyOwedChange(true));
 
-    // نافذة ضبط الإجماليات
-    function openTotalsModal() {
-      document.getElementById('totalsSettingsModal').classList.remove('hidden');
-      document.getElementById('initialDepositUsdInput').value = state.initialDepositUsd ?? 8234;
-      document.getElementById('initialDepositSypInput').value = state.initialDepositSyp || '';
-      document.getElementById('initialWithdrawUsdInput').value = state.initialWithdrawUsd ?? 5410;
-      document.getElementById('initialWithdrawSypInput').value = state.initialWithdrawSyp || '';
-    }
-
-    document.getElementById('openTotalsModalBtn').addEventListener('click', openTotalsModal);
-    document.getElementById('closeTotalsModalBtn').addEventListener('click', () => {
-      document.getElementById('totalsSettingsModal').classList.add('hidden');
-    });
-
-    document.getElementById('saveTotalsSettingsBtn').addEventListener('click', () => {
-      state.initialDepositUsd = parseFloat(document.getElementById('initialDepositUsdInput').value) || 0;
-      state.initialDepositSyp = parseFloat(document.getElementById('initialDepositSypInput').value) || 0;
-      state.initialWithdrawUsd = parseFloat(document.getElementById('initialWithdrawUsdInput').value) || 0;
-      state.initialWithdrawSyp = parseFloat(document.getElementById('initialWithdrawSypInput').value) || 0;
-      saveState();
-      renderAll();
-      document.getElementById('totalsSettingsModal').classList.add('hidden');
-      showToast('تم حفظ أرصدة البداية بنجاح ✓');
-    });
-
     function renderAccountSelects() {
       const activeAccs = getActiveAccounts();
       const opSel = document.getElementById('opAccount');
@@ -632,14 +559,9 @@
 
       const daysMap = {};
       accItems.forEach(h => {
-        const ts = Number(String(h.id || '').replace('h_', '')) || Date.now();
-        const dateObj = new Date(ts);
-        const dateStr = h.date || dateObj.toLocaleDateString('en-CA');
+        const dateStr = h.date || new Date().toLocaleDateString('en-CA');
         if (!daysMap[dateStr]) daysMap[dateStr] = [];
-        daysMap[dateStr].push({
-          ...h,
-          timeStr: dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
-        });
+        daysMap[dateStr].push(h);
       });
 
       const sortedDays = Object.keys(daysMap).sort().reverse();
@@ -691,7 +613,6 @@
                 <span class="font-extrabold text-white num-font">${amountStr}</span>
                 <span class="text-slate-400 text-[11px]">(${desc})</span>
                 ${opNumHtml}
-                <span class="text-[10px] text-slate-500 num-font">⏱ ${h.timeStr}</span>
               </div>
               <button type="button" data-undo-id="${h.id}" class="text-[10px] text-rose-400 hover:underline font-semibold whitespace-nowrap">تراجع</button>
             </div>
@@ -757,16 +678,21 @@
     document.getElementById('modeWithdrawBtn').addEventListener('click', () => setMode('withdraw'));
     document.getElementById('modeTransferBtn').addEventListener('click', () => setMode('transfer'));
 
+    // تعيين التاريخ الافتراضي لليوم الحالي في خانة الإدخال والتصدير
+    const todayStr = new Date().toLocaleDateString('en-CA');
+    document.getElementById('opDate').value = todayStr;
+    document.getElementById('exportDateInput').value = todayStr;
+
     document.getElementById('operationForm').addEventListener('submit', e => {
       e.preventDefault();
       const amount = parseFloat(document.getElementById('opAmount').value);
       const currency = document.getElementById('opCurrency').value;
+      const opDate = document.getElementById('opDate').value || todayStr;
       const opNumber = document.getElementById('opOpNumber').value.trim().replace(/^#+/, '');
       const excludeFromTotal = document.getElementById('excludeFromTotalCheckbox').checked;
       if (!amount || amount <= 0) return;
 
-      const nowTimestamp = Date.now();
-      const nowDate = new Date(nowTimestamp).toLocaleDateString('en-CA');
+      const nowTimestamp = new Date(opDate + 'T12:00:00').getTime() || Date.now();
 
       if (currentMode === 'deposit' || currentMode === 'withdraw') {
         const accId = document.getElementById('opAccount').value;
@@ -781,8 +707,8 @@
         }
 
         state.history.unshift({
-          id: 'h_' + nowTimestamp,
-          date: nowDate,
+          id: 'h_' + nowTimestamp + '_' + Math.floor(Math.random()*1000),
+          date: opDate,
           type: currentMode,
           excludeFromTotal,
           amount,
@@ -792,7 +718,7 @@
           accountName: acc.name
         });
         selectedHistoryAccId = acc.id;
-        showToast(currentMode === 'deposit' ? 'تمت إضافة المبلغ للرصيد' : 'تم خصم المبلغ من الرصيد');
+        showToast(currentMode === 'deposit' ? 'تمت إضافة المبلغ لتاريخ ' + opDate : 'تم خصم المبلغ لتاريخ ' + opDate);
       } else if (currentMode === 'transfer') {
         const fromId = document.getElementById('fromAccount').value;
         const toId = document.getElementById('toAccount').value;
@@ -814,8 +740,8 @@
         }
 
         state.history.unshift({
-          id: 'h_' + nowTimestamp,
-          date: nowDate,
+          id: 'h_' + nowTimestamp + '_' + Math.floor(Math.random()*1000),
+          date: opDate,
           type: 'transfer',
           amount,
           currency,
@@ -826,7 +752,7 @@
           toName: toAcc.name
         });
         selectedHistoryAccId = fromAcc.id;
-        showToast(`تم نقل المبلغ من ${fromAcc.name} إلى ${toAcc.name}`);
+        showToast(`تم نقل المبلغ بتاريخ ${opDate}`);
       }
 
       saveState();
@@ -835,6 +761,7 @@
       document.getElementById('opOpNumber').value = '';
       document.getElementById('excludeFromTotalCheckbox').checked = false;
       document.getElementById('opCurrency').value = 'USD';
+      document.getElementById('opDate').value = todayStr;
     });
 
     document.getElementById('accountsHistoryContainer').addEventListener('click', e => {
@@ -876,7 +803,7 @@
       showToast('تم مسح السجل');
     });
 
-    // تصدير تقرير اليوم الذي يختاره المستخدم فقط
+    // تصدير تقرير اليوم المختار
     document.getElementById('exportReportBtn').addEventListener('click', () => {
       const selectedDate = document.getElementById('exportDateInput').value;
       if (!selectedDate) {
@@ -887,9 +814,7 @@
       const allHistory = state.history || [];
       const dayOps = allHistory.filter(h => {
         if (h.excludeFromTotal) return false;
-        const ts = Number(String(h.id || '').replace('h_', '')) || Date.now();
-        const dateObj = new Date(ts);
-        const dateStr = h.date || dateObj.toLocaleDateString('en-CA');
+        const dateStr = h.date || new Date().toLocaleDateString('en-CA');
         return dateStr === selectedDate;
       });
 
@@ -918,18 +843,16 @@
 
       reportText += "--- تفصيل العمليات والحسابات ---\n";
       dayOps.forEach((h, idx) => {
-        const ts = Number(String(h.id || '').replace('h_', '')) || Date.now();
-        const timeStr = new Date(ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
         const refVal = h.opNumber || h.note || '';
         const opNumStr = refVal ? ` [رقم العملية: #${refVal}]` : '';
         const accName = h.accountName || (h.fromName ? `${h.fromName} إلى ${h.toName}` : 'حساب عام');
 
         if (h.type === 'deposit') {
-          reportText += `${idx + 1}. [إيداع] ${timeStr} - الحساب: (${accName}) - المبلغ: ${h.amount} ${h.currency}${opNumStr}\n`;
+          reportText += `${idx + 1}. [إيداع] - الحساب: (${accName}) - المبلغ: ${h.amount} ${h.currency}${opNumStr}\n`;
         } else if (h.type === 'withdraw') {
-          reportText += `${idx + 1}. [سحب] ${timeStr} - الحساب: (${accName}) - المبلغ: ${h.amount} ${h.currency}${opNumStr}\n`;
+          reportText += `${idx + 1}. [سحب] - الحساب: (${accName}) - المبلغ: ${h.amount} ${h.currency}${opNumStr}\n`;
         } else if (h.type === 'transfer') {
-          reportText += `${idx + 1}. [نقل] ${timeStr} - من (${h.fromName}) إلى (${h.toName}) - المبلغ: ${h.amount} ${h.currency}${opNumStr}\n`;
+          reportText += `${idx + 1}. [نقل] - من (${h.fromName}) إلى (${h.toName}) - المبلغ: ${h.amount} ${h.currency}${opNumStr}\n`;
         }
       });
 
@@ -945,9 +868,6 @@
 
       showToast(`تم تصدير تقرير يوم ${selectedDate} بنجاح ✓`);
     });
-
-    // تعيين التاريخ الافتراضي لليوم الحالي في خانة التصدير
-    document.getElementById('exportDateInput').value = new Date().toLocaleDateString('en-CA');
 
     renderAll();
     pullStateFromCloud();
