@@ -91,7 +91,7 @@
         <div id="activeAccountsList" class="grid grid-cols-1 gap-1.5"></div>
       </div>
 
-      <!-- إجمالي الإيداعات والسحوبات الكلية -->
+      <!-- إجمالي الإيداعات والسحوبات الكلية (تبدأ من الصفر صافي) -->
       <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80">
         <div class="bg-slate-950/70 border border-emerald-500/20 rounded-xl p-2.5 flex items-center justify-between">
           <div>
@@ -113,7 +113,7 @@
 
     </section>
 
-    <!-- 2. خانة العمليات السريعة (مع خانة اختيار التاريخ القديم) -->
+    <!-- 2. خانة العمليات السريعة -->
     <section class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
       <div class="grid grid-cols-3 bg-slate-950/70 p-1 gap-1 border-b border-slate-800">
         <button id="modeDepositBtn" type="button" class="py-2 px-1 rounded-xl text-xs font-bold transition bg-emerald-600 text-white shadow">
@@ -128,7 +128,6 @@
       </div>
 
       <form id="operationForm" class="p-4 space-y-3">
-        <!-- خانة اختيار تاريخ العملية (تاريخ سابقة أو اليوم) -->
         <div class="bg-slate-950/90 border border-sky-500/30 rounded-xl p-2.5 flex items-center justify-between gap-2">
           <label for="opDate" class="text-xs font-bold text-sky-300 flex items-center gap-1.5">
             <span>📅</span>
@@ -249,10 +248,10 @@
             parsed.history = Array.isArray(parsed.history) ? parsed.history : [];
             parsed.companyOwedUsd = Number(parsed.companyOwedUsd) || 0;
             parsed.companyOwedSyp = Number(parsed.companyOwedSyp) || 0;
-            parsed.initialDepositUsd = Number(parsed.initialDepositUsd) || 0;
-            parsed.initialDepositSyp = Number(parsed.initialDepositSyp) || 0;
-            parsed.initialWithdrawUsd = Number(parsed.initialWithdrawUsd) || 0;
-            parsed.initialWithdrawSyp = Number(parsed.initialWithdrawSyp) || 0;
+            parsed.initialDepositUsd = 0;
+            parsed.initialDepositSyp = 0;
+            parsed.initialWithdrawUsd = 0;
+            parsed.initialWithdrawSyp = 0;
             return parsed;
           }
         }
@@ -296,24 +295,13 @@
           const data = await res.json();
           if (data && Array.isArray(data.accounts)) {
             state.accounts = data.accounts;
-            const cloudHist = Array.isArray(data.history) ? data.history : [];
-            const localHist = Array.isArray(state.history) ? state.history : [];
-            const mergedMap = new Map();
-            [...cloudHist, ...localHist].forEach(item => {
-              if (item && item.id) mergedMap.set(item.id, item);
-            });
-            state.history = Array.from(mergedMap.values()).sort((a, b) => {
-              const tA = Number(String(a.id).replace('h_', '')) || 0;
-              const tB = Number(String(b.id).replace('h_', '')) || 0;
-              return tB - tA;
-            });
-
+            if (Array.isArray(data.history)) state.history = data.history;
             if (data.companyOwedUsd !== undefined) state.companyOwedUsd = Number(data.companyOwedUsd) || 0;
             if (data.companyOwedSyp !== undefined) state.companyOwedSyp = Number(data.companyOwedSyp) || 0;
-            if (data.initialDepositUsd !== undefined) state.initialDepositUsd = Number(data.initialDepositUsd) || 0;
-            if (data.initialDepositSyp !== undefined) state.initialDepositSyp = Number(data.initialDepositSyp) || 0;
-            if (data.initialWithdrawUsd !== undefined) state.initialWithdrawUsd = Number(data.initialWithdrawUsd) || 0;
-            if (data.initialWithdrawSyp !== undefined) state.initialWithdrawSyp = Number(data.initialWithdrawSyp) || 0;
+            state.initialDepositUsd = 0;
+            state.initialDepositSyp = 0;
+            state.initialWithdrawUsd = 0;
+            state.initialWithdrawSyp = 0;
             try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
             renderAll();
           }
@@ -378,16 +366,11 @@
         }
       });
 
-      const finalDepUsd = (Number(state.initialDepositUsd) || 0) + histDepUsd;
-      const finalDepSyp = (Number(state.initialDepositSyp) || 0) + histDepSyp;
-      const finalWdUsd = (Number(state.initialWithdrawUsd) || 0) + histWdUsd;
-      const finalWdSyp = (Number(state.initialWithdrawSyp) || 0) + histWdSyp;
-
       return {
-        depUsd: Math.max(0, finalDepUsd),
-        depSyp: Math.max(0, finalDepSyp),
-        wdUsd: Math.max(0, finalWdUsd),
-        wdSyp: Math.max(0, finalWdSyp)
+        depUsd: Math.max(0, histDepUsd),
+        depSyp: Math.max(0, histDepSyp),
+        wdUsd: Math.max(0, histWdUsd),
+        wdSyp: Math.max(0, histWdSyp)
       };
     }
 
@@ -678,7 +661,6 @@
     document.getElementById('modeWithdrawBtn').addEventListener('click', () => setMode('withdraw'));
     document.getElementById('modeTransferBtn').addEventListener('click', () => setMode('transfer'));
 
-    // تعيين التاريخ الافتراضي لليوم الحالي في خانة الإدخال والتصدير
     const todayStr = new Date().toLocaleDateString('en-CA');
     document.getElementById('opDate').value = todayStr;
     document.getElementById('exportDateInput').value = todayStr;
@@ -736,7 +718,7 @@
           toAcc.usd = Number((Number(toAcc.usd || 0) + amount).toFixed(2));
         } else {
           fromAcc.syp = Math.round(Number(fromAcc.syp || 0) - amount);
-          toAcc.syp = Math.round(Number(toAcc.syp || 0) + amount);
+          fromAcc.syp = Math.round(Number(fromAcc.syp || 0) + amount);
         }
 
         state.history.unshift({
@@ -803,7 +785,6 @@
       showToast('تم مسح السجل');
     });
 
-    // تصدير تقرير اليوم المختار
     document.getElementById('exportReportBtn').addEventListener('click', () => {
       const selectedDate = document.getElementById('exportDateInput').value;
       if (!selectedDate) {
