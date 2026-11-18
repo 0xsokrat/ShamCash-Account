@@ -37,16 +37,23 @@
 
   <div class="max-w-xl mx-auto space-y-4">
 
-    <!-- شريط العنوان وأزرار الضبط الابتدائي والإعدادات -->
+    <!-- شريط العنوان وحالة المزامنة الفورية -->
     <div class="flex items-center justify-between gap-2 flex-wrap">
       <div>
-        <h1 class="text-base font-extrabold text-white">لوحة الأرصدة والحسابات ($)</h1>
-        <span id="currentShiftIndicator" class="text-[10px] font-bold text-sky-400 block">🕒 دورة الجرد الحالية: من 3:00 ظهراً إلى 3:00 ظهراً</span>
+        <div class="flex items-center gap-2">
+          <h1 class="text-base font-extrabold text-white">لوحة الأرصدة والحسابات ($)</h1>
+          <span id="syncStatusBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">⏳ جاري الاتصال...</span>
+        </div>
+        <span id="currentShiftIndicator" class="text-[10px] font-bold text-sky-400 block mt-0.5">🕒 دورة الجرد: من 3:00 ظهراً إلى 3:00 ظهراً</span>
       </div>
       <div class="flex items-center gap-1.5 flex-wrap">
+        <button id="manualSyncBtn" type="button" class="px-2.5 py-1.5 rounded-xl bg-sky-600/20 hover:bg-sky-500/30 border border-sky-500/40 text-[11px] font-bold text-sky-300 flex items-center gap-1 transition" title="تحديث البيانات مع السحابة الآن">
+          <span>🔄</span>
+          <span>مزامنة</span>
+        </button>
         <button id="openInitModalBtn" type="button" class="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-[11px] font-bold text-amber-300 flex items-center gap-1 transition">
           <span>🛠️</span>
-          <span>تصفير / قيم ابتدائية</span>
+          <span>قيم ابتدائية</span>
         </button>
         <a href="settings.html" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1.5 transition">
           <span>⚙️</span>
@@ -55,15 +62,15 @@
       </div>
     </div>
 
-    <!-- نافذة التصفير الشامل وإدخال القيم الابتدائية (دولار فقط) -->
+    <!-- نافذة إدخال القيم الابتدائية (آمنة ولا تمسح السجل تلقائياً) -->
     <section id="initModal" class="hidden bg-slate-900 border-2 border-amber-500/50 rounded-2xl p-4 shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-        <h2 class="text-xs font-extrabold text-amber-400">🛠️ ضبط القيم الابتدائية ($) وتصفير السجل</h2>
+        <h2 class="text-xs font-extrabold text-amber-400">🛠️ ضبط القيم الابتدائية ($)</h2>
         <button id="closeInitModalBtn" type="button" class="text-xs text-slate-400 hover:text-white font-bold px-2 py-0.5 rounded bg-slate-800">إغلاق ✕</button>
       </div>
 
       <div class="space-y-2">
-        <span class="text-[11px] font-bold text-sky-400 block">1. الرصيد الابتدائي في كل حساب ($):</span>
+        <span class="text-[11px] font-bold text-sky-400 block">1. الرصيد الحالي في كل حساب ($):</span>
         <div id="initAccountsContainer" class="space-y-2"></div>
       </div>
 
@@ -86,24 +93,25 @@
         </div>
       </div>
 
+      <!-- خيار المسح غير مفعل افتراضياً لمنع أي مسح بالخطأ -->
       <div class="bg-rose-950/30 border border-rose-500/30 rounded-xl px-3 py-2">
         <label class="flex items-center gap-2 cursor-pointer select-none">
-          <input id="clearHistoryOnInitCheckbox" type="checkbox" checked class="w-4 h-4 rounded accent-rose-500 cursor-pointer" />
-          <span class="text-[11px] font-bold text-rose-300">🧹 حذف ومسح كل العمليات القديمة من السجل والبدء من الصفر بهذه القيم</span>
+          <input id="clearHistoryOnInitCheckbox" type="checkbox" class="w-4 h-4 rounded accent-rose-500 cursor-pointer" />
+          <span class="text-[11px] font-bold text-rose-300">🧹 مسح سجل العمليات السابقة أيضاً (اتركه فارغاً للحفاظ على سجلك)</span>
         </label>
       </div>
 
       <div class="grid grid-cols-2 gap-2">
         <button id="saveInitValuesBtn" type="button" class="py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg transition">
-          حفظ واعتماد القيم ✓
+          حفظ ومزامنة مع السحابة ✓
         </button>
         <button id="zeroEverythingBtn" type="button" class="py-2.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/40 border border-rose-500/40 text-rose-300 font-bold text-xs transition">
-          تصفير كل شيء لـ ($0)
+          تصفير شامل لـ ($0)
         </button>
       </div>
     </section>
 
-    <!-- 1. لوحة الملخص المدمجة بالأعلى (دولار فقط) -->
+    <!-- 1. لوحة الملخص المدمجة بالأعلى -->
     <section class="bg-gradient-to-br from-slate-900 to-slate-950 border border-emerald-500/40 rounded-2xl p-4 shadow-xl space-y-3">
       
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -150,7 +158,7 @@
 
     </section>
 
-    <!-- 2. خانة العمليات السريعة (إيداع، سحب، مصروفات، نقل) -->
+    <!-- 2. خانة العمليات السريعة -->
     <section class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
       <div class="grid grid-cols-4 bg-slate-950/70 p-1 gap-1 border-b border-slate-800">
         <button id="modeDepositBtn" type="button" class="py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition bg-emerald-600 text-white shadow">
@@ -168,7 +176,6 @@
       </div>
 
       <form id="operationForm" class="p-4 space-y-3">
-        <!-- اختيار يوم الجرد والوقت (لحساب دورة الـ 3:00 ظهراً بدقة) -->
         <div class="bg-slate-950/90 border border-sky-500/30 rounded-xl p-2.5 space-y-2">
           <div class="flex items-center justify-between gap-2 flex-wrap">
             <label for="opDate" class="text-xs font-bold text-sky-300 flex items-center gap-1.5">
@@ -177,7 +184,7 @@
             </label>
             <div class="flex items-center gap-1.5">
               <input id="opDate" type="date" class="rounded-lg bg-slate-900 border border-slate-700 text-xs font-bold text-white px-2.5 py-1 num-font focus:border-sky-500 focus:outline-none" />
-              <input id="opTime" type="time" class="rounded-lg bg-slate-900 border border-slate-700 text-xs font-bold text-emerald-300 px-2 py-1 num-font focus:border-sky-500 focus:outline-none" title="وقت العملية" />
+              <input id="opTime" type="time" class="rounded-lg bg-slate-900 border border-slate-700 text-xs font-bold text-emerald-300 px-2 py-1 num-font focus:border-sky-500 focus:outline-none" />
               <button id="setNowShiftBtn" type="button" class="text-[10px] font-bold bg-sky-600/30 hover:bg-sky-600/50 text-sky-200 px-2 py-1 rounded-lg transition">الآن</button>
             </div>
           </div>
@@ -223,10 +230,9 @@
       </form>
     </section>
 
-    <!-- 3. السجل التفاعلي المقسّم حسب دورات الجرد (3 ظهراً -> 3 ظهراً) -->
+    <!-- 3. السجل التفاعلي المقسّم حسب دورات الجرد -->
     <section class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-3 shadow-lg">
       
-      <!-- شريط التصدير المخصص لدورة الجرد (من 3 ظهراً لـ 3 ظهراً) -->
       <div class="bg-slate-950/90 border border-sky-500/30 rounded-xl p-2.5 space-y-2">
         <div class="flex items-center justify-between flex-wrap gap-2">
           <div class="flex items-center gap-1.5">
@@ -238,7 +244,7 @@
             <button id="exportReportBtn" type="button" class="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-[11px] font-extrabold text-white shadow transition">
               تحميل التقرير (.txt)
             </button>
-            <button id="copyReportBtn" type="button" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-[11px] font-extrabold text-white shadow transition" title="نسخ التقرير كنص">
+            <button id="copyReportBtn" type="button" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-[11px] font-extrabold text-white shadow transition">
               📋 نسخ
             </button>
           </div>
@@ -246,10 +252,8 @@
         <div id="exportShiftPeriodLabel" class="text-[10px] text-amber-300 font-bold"></div>
       </div>
 
-      <!-- 1. فلتر اختيار الحساب -->
       <div id="accountTabsContainer" class="flex items-center gap-1.5 overflow-x-auto pb-1"></div>
 
-      <!-- 2. تبويبات نوع السجل (الكل / إيداعات بس / سحب بس / مصروفات بس) -->
       <div id="typeTabsContainer" class="grid grid-cols-4 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
         <button type="button" data-type-tab="ALL" class="py-1.5 px-1 rounded-lg text-[11px] font-extrabold bg-slate-800 text-white shadow transition">
           📋 الكل (<span id="countAll">0</span>)
@@ -265,7 +269,6 @@
         </button>
       </div>
 
-      <!-- شريط البحث -->
       <div class="relative">
         <input id="historySearchInput" type="text" placeholder="🔍 ابحث برقم العملية أو المبلغ أو التاريخ..." class="w-full rounded-xl bg-slate-950 border border-slate-800 focus:border-sky-500 focus:outline-none px-3 py-2 text-xs text-white" />
       </div>
@@ -280,6 +283,12 @@
   </div>
 
   <script>
+    // =========================================================================
+    // رابط Firebase الخاص بك مثبت هنا ليتزامن الموبايل واللابتوب تلقائياً:
+    // =========================================================================
+    const HARDCODED_FIREBASE_URL = 'https://shamcashapp-46c89-default-rtdb.firebaseio.com';
+    const HARDCODED_SECRET_KEY   = 'my_balances';
+
     const STORAGE_KEY = 'simple_balance_mediator_v2';
     const DB_CONFIG_KEY = 'simple_balance_db_config_v1';
 
@@ -289,9 +298,11 @@
         { id: 'acc_2', name: 'حساب 2', usd: 0, active: true }
       ],
       history: [],
+      deletedIds: [],
       initialDepositUsd: 0,
       initialWithdrawUsd: 0,
-      initialExpenseUsd: 0
+      initialExpenseUsd: 0,
+      updatedAt: 0
     };
 
     let state = loadState();
@@ -300,10 +311,8 @@
     let selectedHistoryAccId = 'ALL';
     let selectedHistoryType = 'ALL';
     let searchQuery = '';
+    let hasPulledFromCloudOnce = false;
 
-    // دالة تحسب "تاريخ يوم الجرد":
-    // اليوم يمتد من (اليوم السابق الساعة 15:00) إلى (هذا اليوم الساعة 15:00).
-    // أي عملية تحدث الساعة 15:00 (3:00 ظهراً) أو بعدها تُحسب تلقائياً ضمن جرد اليوم التالي!
     function getShiftDateForDateObj(d) {
       const copy = new Date(d.getTime());
       if (copy.getHours() >= 15) {
@@ -312,7 +321,6 @@
       return copy.toLocaleDateString('en-CA');
     }
 
-    // دالة تعيد نص توضيحي لفترة الجرد: من (اليوم السابق 3:00 ظهراً) إلى (اليوم المختار 3:00 ظهراً)
     function getShiftWindowText(shiftDateStr) {
       if (!shiftDateStr) return '';
       const parts = shiftDateStr.split('-').map(Number);
@@ -325,13 +333,6 @@
 
     function getItemShiftDate(h) {
       if (h.shiftDate) return h.shiftDate;
-      if (h.createdAt && h.timeStr) {
-        const d = new Date(h.createdAt);
-        // إذا كانت العملية مسجلة اليوم مع وقت فعلي، نطبق قاعدة الـ 3 ظهراً
-        if (!h.manualDateOverride) {
-          return getShiftDateForDateObj(d);
-        }
-      }
       return h.date || new Date().toLocaleDateString('en-CA');
     }
 
@@ -342,9 +343,11 @@
           const parsed = JSON.parse(raw);
           if (parsed && Array.isArray(parsed.accounts)) {
             parsed.history = Array.isArray(parsed.history) ? parsed.history : [];
+            parsed.deletedIds = Array.isArray(parsed.deletedIds) ? parsed.deletedIds : [];
             parsed.initialDepositUsd = Number(parsed.initialDepositUsd) || 0;
             parsed.initialWithdrawUsd = Number(parsed.initialWithdrawUsd) || 0;
             parsed.initialExpenseUsd = Number(parsed.initialExpenseUsd) || 0;
+            parsed.updatedAt = Number(parsed.updatedAt) || 0;
             return parsed;
           }
         }
@@ -355,54 +358,157 @@
     function loadDbConfig() {
       try {
         const raw = localStorage.getItem(DB_CONFIG_KEY);
-        if (raw) return JSON.parse(raw);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.dbUrl) return parsed;
+        }
       } catch (e) {}
-      return { dbUrl: '', secretKey: 'my_balances' };
+      const cfg = {
+        dbUrl: HARDCODED_FIREBASE_URL,
+        secretKey: HARDCODED_SECRET_KEY
+      };
+      try { localStorage.setItem(DB_CONFIG_KEY, JSON.stringify(cfg)); } catch (e) {}
+      return cfg;
     }
 
     function getCloudEndpoint() {
-      if (!dbConfig || !dbConfig.dbUrl) return null;
-      const base = dbConfig.dbUrl.trim().replace(/\/+$/, '');
-      const key = encodeURIComponent((dbConfig.secretKey || 'my_balances').trim());
+      const urlToUse = (dbConfig && dbConfig.dbUrl) ? dbConfig.dbUrl : HARDCODED_FIREBASE_URL;
+      if (!urlToUse) return null;
+      const base = urlToUse.trim().replace(/\/+$/, '');
+      const key = encodeURIComponent(((dbConfig && dbConfig.secretKey) || HARDCODED_SECRET_KEY || 'my_balances').trim());
       return `${base}/shamcash_${key}.json`;
     }
 
-    async function pushStateToCloud() {
+    function setSyncBadge(status, text) {
+      const badge = document.getElementById('syncStatusBadge');
+      if (!badge) return;
+      if (status === 'ok') {
+        badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30';
+        badge.textContent = text || '☁️ متزامن';
+      } else if (status === 'syncing') {
+        badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-300 border border-sky-500/30';
+        badge.textContent = text || '🔄 جاري المزامنة...';
+      } else {
+        badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30';
+        badge.textContent = text || '⚠️ غير متصل';
+      }
+    }
+
+    async function pushStateToCloud(forceOverwrite = false) {
       const endpoint = getCloudEndpoint();
       if (!endpoint) return;
+
+      setSyncBadge('syncing');
       try {
-        await fetch(endpoint, {
+        if (!forceOverwrite && !hasPulledFromCloudOnce) {
+          await pullStateFromCloud(false);
+        }
+
+        state.updatedAt = Date.now();
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+
+        const res = await fetch(endpoint, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...state, updatedAt: Date.now() })
+          body: JSON.stringify(state)
         });
-      } catch (e) {}
+
+        if (res.ok) {
+          setSyncBadge('ok', '☁️ متزامن تلقائياً');
+        } else {
+          setSyncBadge('warn', '⚠️ خطأ مزامنة');
+        }
+      } catch (e) {
+        setSyncBadge('warn', '⚠️ لا يوجد إنترنت');
+      }
     }
 
-    async function pullStateFromCloud() {
+    async function pullStateFromCloud(showNotification = false) {
       const endpoint = getCloudEndpoint();
       if (!endpoint) return;
+
+      setSyncBadge('syncing');
       try {
-        const res = await fetch(endpoint);
-        if (res.ok) {
-          const data = await res.json();
-          if (data && Array.isArray(data.accounts)) {
-            state.accounts = data.accounts;
-            state.history = Array.isArray(data.history) ? data.history : [];
-            state.initialDepositUsd = Number(data.initialDepositUsd) || 0;
-            state.initialWithdrawUsd = Number(data.initialWithdrawUsd) || 0;
-            state.initialExpenseUsd = Number(data.initialExpenseUsd) || 0;
-            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
-            renderAll();
-          }
+        const res = await fetch(endpoint, { cache: 'no-store' });
+        if (!res.ok) {
+          setSyncBadge('warn', '⚠️ تعذر الاتصال');
+          return;
         }
-      } catch (e) {}
+
+        const cloudData = await res.json();
+        hasPulledFromCloudOnce = true;
+
+        if (!cloudData || !Array.isArray(cloudData.accounts)) {
+          if ((state.history && state.history.length > 0) || state.initialDepositUsd > 0) {
+            await pushStateToCloud(true);
+          } else {
+            setSyncBadge('ok', '☁️ متصل بالسحابة');
+          }
+          return;
+        }
+
+        const deletedSet = new Set([
+          ...(Array.isArray(state.deletedIds) ? state.deletedIds : []),
+          ...(Array.isArray(cloudData.deletedIds) ? cloudData.deletedIds : [])
+        ]);
+        state.deletedIds = Array.from(deletedSet).slice(-500);
+
+        const mergedHistoryMap = new Map();
+        const cloudHist = Array.isArray(cloudData.history) ? cloudData.history : [];
+        const localHist = Array.isArray(state.history) ? state.history : [];
+
+        [...cloudHist, ...localHist].forEach(item => {
+          if (item && item.id && !deletedSet.has(item.id)) {
+            mergedHistoryMap.set(item.id, item);
+          }
+        });
+
+        const mergedHistory = Array.from(mergedHistoryMap.values()).sort((a, b) => {
+          return (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0);
+        });
+
+        const cloudIsNewer = (Number(cloudData.updatedAt) || 0) >= (Number(state.updatedAt) || 0);
+
+        if (cloudIsNewer) {
+          state.accounts = cloudData.accounts;
+          state.initialDepositUsd = Number(cloudData.initialDepositUsd) || 0;
+          state.initialWithdrawUsd = Number(cloudData.initialWithdrawUsd) || 0;
+          state.initialExpenseUsd = Number(cloudData.initialExpenseUsd) || 0;
+          state.updatedAt = Number(cloudData.updatedAt) || Date.now();
+        }
+
+        state.history = mergedHistory;
+
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+        renderAll();
+        setSyncBadge('ok', '☁️ متزامن تلقائياً');
+        if (showNotification) showToast('تمت المزامنة مع السحابة بنجاح ✓');
+      } catch (e) {
+        setSyncBadge('warn', '⚠️ تعذر الاتصال');
+      }
     }
 
-    function saveState() {
+    function saveState(forceOverwrite = false) {
+      state.updatedAt = Date.now();
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
-      pushStateToCloud();
+      pushStateToCloud(forceOverwrite);
     }
+
+    setInterval(() => {
+      pullStateFromCloud(false);
+    }, 10000);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        dbConfig = loadDbConfig();
+        pullStateFromCloud(false);
+      }
+    });
+
+    document.getElementById('manualSyncBtn').addEventListener('click', () => {
+      dbConfig = loadDbConfig();
+      pullStateFromCloud(true);
+    });
 
     function showToast(msg) {
       const box = document.getElementById('toastBox');
@@ -444,7 +550,6 @@
 
       (state.history || []).forEach(h => {
         if (h.excludeFromTotal) return;
-        if (h.currency && h.currency !== 'USD') return;
         const amt = Number(h.amount) || 0;
         if (h.type === 'deposit') histDepUsd += amt;
         else if (h.type === 'withdraw') histWdUsd += amt;
@@ -540,6 +645,7 @@
       document.getElementById('initDepUsd').value = Number(state.initialDepositUsd) || 0;
       document.getElementById('initWdUsd').value = Number(state.initialWithdrawUsd) || 0;
       document.getElementById('initExpUsd').value = Number(state.initialExpenseUsd) || 0;
+      document.getElementById('clearHistoryOnInitCheckbox').checked = false;
 
       modal.classList.remove('hidden');
     }
@@ -555,7 +661,6 @@
       state.accounts.forEach(acc => {
         const usdIn = document.querySelector(`input[data-init-acc-usd="${acc.id}"]`);
         if (usdIn) acc.usd = Number(parseFloat(usdIn.value || 0).toFixed(2));
-        acc.syp = 0;
       });
 
       state.initialDepositUsd = parseFloat(document.getElementById('initDepUsd').value) || 0;
@@ -563,23 +668,29 @@
       state.initialExpenseUsd = parseFloat(document.getElementById('initExpUsd').value) || 0;
 
       if (shouldClearHistory) {
+        (state.history || []).forEach(h => {
+          if (h && h.id) state.deletedIds.push(h.id);
+        });
         state.history = [];
       }
 
-      saveState();
+      saveState(true);
       renderAll();
       document.getElementById('initModal').classList.add('hidden');
-      showToast('تم حفظ القيم الابتدائية وتحديث النظام بنجاح ✓');
+      showToast('تم حفظ القيم ومزامنتها مع السحابة ✓');
     });
 
     document.getElementById('zeroEverythingBtn').addEventListener('click', () => {
-      if (!confirm('هل أنت متأكد من تصفير جميع الأرصدة والمجاميع ومسح السجل بالكامل إلى ($0)؟')) return;
-      state.accounts.forEach(acc => { acc.usd = 0; acc.syp = 0; });
+      if (!confirm('هل أنت متأكد من تصفير جميع الأرصدة والمجاميع ومسح السجل بالكامل إلى ($0) على جميع الأجهزة؟')) return;
+      state.accounts.forEach(acc => { acc.usd = 0; });
+      (state.history || []).forEach(h => {
+        if (h && h.id) state.deletedIds.push(h.id);
+      });
       state.history = [];
       state.initialDepositUsd = 0;
       state.initialWithdrawUsd = 0;
       state.initialExpenseUsd = 0;
-      saveState();
+      saveState(true);
       renderAll();
       document.getElementById('initModal').classList.add('hidden');
       showToast('تم تصفير كل شيء إلى ($0) تماماً ✓');
@@ -622,7 +733,7 @@
       container.innerHTML = '';
 
       const activeAccs = getActiveAccounts();
-      const allHistory = (state.history || []).filter(h => !h.currency || h.currency === 'USD');
+      const allHistory = state.history || [];
 
       if (!selectedHistoryAccId || (selectedHistoryAccId !== 'ALL' && !activeAccs.some(a => a.id === selectedHistoryAccId))) {
         selectedHistoryAccId = 'ALL';
@@ -705,7 +816,6 @@
         return;
       }
 
-      // تجميع السجل حسب "يوم الجرد (3 ظهراً -> 3 ظهراً)"
       const shiftsMap = {};
       filteredItems.forEach(h => {
         const shiftDay = getItemShiftDate(h);
@@ -747,7 +857,7 @@
 
         dayItems.forEach(h => {
           const amountStr = formatUsd(h.amount);
-          const itemDate = h.actualDate || h.date || shiftDay;
+          const itemDate = h.date || shiftDay;
           const timeLabel = h.timeStr ? ` 🕒 ${h.timeStr}` : '';
           let badge = '', desc = '';
           const targetAccName = escapeHtml(h.accountName || '');
@@ -920,7 +1030,6 @@
           createdAt: realNow,
           date: selectedShiftDate,
           shiftDate: selectedShiftDate,
-          actualDate: new Date().toLocaleDateString('en-CA'),
           timeStr: timeVal,
           type: currentMode,
           excludeFromTotal: currentMode === 'expense' ? false : excludeFromTotal,
@@ -931,9 +1040,7 @@
           accountName: acc.name
         });
 
-        if (currentMode === 'deposit') showToast(`تم تسجيل الإيداع في جرد يوم ${selectedShiftDate} ✓`);
-        else if (currentMode === 'withdraw') showToast(`تم تسجيل السحب في جرد يوم ${selectedShiftDate} ✓`);
-        else showToast(`تم تسجيل المصروف في جرد يوم ${selectedShiftDate} ✓`);
+        showToast(`تم الحفظ والمزامنة في جرد ${selectedShiftDate} ✓`);
       } else if (currentMode === 'transfer') {
         const fromId = document.getElementById('fromAccount').value;
         const toId = document.getElementById('toAccount').value;
@@ -954,7 +1061,6 @@
           createdAt: realNow,
           date: selectedShiftDate,
           shiftDate: selectedShiftDate,
-          actualDate: new Date().toLocaleDateString('en-CA'),
           timeStr: timeVal,
           type: 'transfer',
           amount,
@@ -965,7 +1071,7 @@
           toId: toAcc.id,
           toName: toAcc.name
         });
-        showToast(`تم نقل المبلغ في جرد يوم ${selectedShiftDate}`);
+        showToast(`تم النقل والمزامنة في جرد ${selectedShiftDate} ✓`);
       }
 
       saveState();
@@ -996,14 +1102,16 @@
         if (toAcc) toAcc.usd = Number((Number(toAcc.usd || 0) - item.amount).toFixed(2));
       }
 
+      if (!Array.isArray(state.deletedIds)) state.deletedIds = [];
+      state.deletedIds.push(id);
       state.history = state.history.filter(h => h.id !== id);
-      saveState();
+      saveState(true);
       renderAll();
-      showToast('تم التراجع عن العملية وتعديل الرصيد');
+      showToast('تم حذف العملية ومزامنة التعديل ✓');
     });
 
     function generateShiftReportText(selectedShiftDate) {
-      const allHistory = (state.history || []).filter(h => !h.currency || h.currency === 'USD');
+      const allHistory = state.history || [];
       const dayOps = allHistory.filter(h => {
         if (h.excludeFromTotal) return false;
         return getItemShiftDate(h) === selectedShiftDate;
@@ -1138,7 +1246,7 @@
     });
 
     renderAll();
-    pullStateFromCloud();
+    pullStateFromCloud(false);
   </script>
 </body>
 </html>
