@@ -37,19 +37,121 @@
 
   <div class="max-w-xl mx-auto space-y-4">
 
-    <!-- شريط العنوان وزر الإعدادات -->
-    <div class="flex items-center justify-between gap-2">
+    <!-- شريط العنوان وأزرار الجرد السريع والضبط الابتدائي -->
+    <div class="flex items-center justify-between gap-2 flex-wrap">
       <h1 class="text-base font-extrabold text-white">لوحة الأرصدة والحسابات</h1>
-      <a href="settings.html" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1.5 transition">
-        <span>⚙️</span>
-        <span>الإعدادات</span>
-      </a>
+      <div class="flex items-center gap-1.5 flex-wrap">
+        <button id="show3PmInventoryBtn" type="button" class="px-2.5 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-[11px] font-bold text-emerald-300 flex items-center gap-1 transition">
+          <span>🕒</span>
+          <span>جرد الساعة 3:00 ظهراً</span>
+        </button>
+        <button id="openInitModalBtn" type="button" class="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-[11px] font-bold text-amber-300 flex items-center gap-1 transition">
+          <span>🛠️</span>
+          <span>تصفير / قيم ابتدائية</span>
+        </button>
+        <a href="settings.html" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1.5 transition">
+          <span>⚙️</span>
+          <span>الإعدادات</span>
+        </a>
+      </div>
     </div>
+
+    <!-- نافذة عرض جرد الساعة 3:00 ظهراً (تفتح تلقائياً الساعة 3 ظهراً أو عند الضغط على الزر) -->
+    <section id="daily3PmModal" class="hidden bg-slate-900 border-2 border-emerald-500/60 rounded-2xl p-4 shadow-2xl space-y-3">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <div class="flex items-center gap-1.5">
+          <span class="text-base">🕒</span>
+          <h2 class="text-xs font-extrabold text-emerald-400">ملخص الجرد اليومي (الساعة 3:00 ظهراً)</h2>
+        </div>
+        <button id="close3PmModalBtn" type="button" class="text-xs text-slate-400 hover:text-white font-bold px-2 py-0.5 rounded bg-slate-800">إغلاق ✕</button>
+      </div>
+
+      <div class="flex items-center justify-between bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2">
+        <span class="text-[11px] font-bold text-slate-300">📅 اختر يوم الجرد:</span>
+        <div class="flex items-center gap-2">
+          <input id="inv3PmDateInput" type="date" class="rounded-lg bg-slate-900 border border-slate-700 text-xs font-bold text-white px-2.5 py-1 num-font" />
+          <select id="inv3PmFilterMode" class="rounded-lg bg-slate-900 border border-slate-700 text-[11px] font-bold text-emerald-400 px-2 py-1">
+            <option value="all_day">كل عمليات اليوم</option>
+            <option value="until_3pm">فقط حتى الساعة 3:00 ظهراً</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="inv3PmSummaryContent" class="space-y-2 text-xs"></div>
+
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <button id="export3PmReportBtn" type="button" class="py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs shadow transition">
+          📥 تحميل ملف الجرد (.txt)
+        </button>
+        <button id="copy3PmReportBtn" type="button" class="py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow transition">
+          📋 نسخ الجرد للواتساب/تلغرام
+        </button>
+      </div>
+    </section>
+
+    <!-- نافذة التصفير الشامل وإدخال القيم الابتدائية -->
+    <section id="initModal" class="hidden bg-slate-900 border-2 border-amber-500/50 rounded-2xl p-4 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h2 class="text-xs font-extrabold text-amber-400">🛠️ ضبط القيم الابتدائية وتصفير السجل</h2>
+        <button id="closeInitModalBtn" type="button" class="text-xs text-slate-400 hover:text-white font-bold px-2 py-0.5 rounded bg-slate-800">إغلاق ✕</button>
+      </div>
+
+      <div class="space-y-2">
+        <span class="text-[11px] font-bold text-sky-400 block">1. الرصيد الحالي / الابتدائي في كل حساب:</span>
+        <div id="initAccountsContainer" class="space-y-2"></div>
+      </div>
+
+      <div class="space-y-2 pt-2 border-t border-slate-800">
+        <span class="text-[11px] font-bold text-emerald-400 block">2. القيم الابتدائية للمجاميع العامة (قبل العمليات الجديدة):</span>
+        
+        <div class="grid grid-cols-2 gap-2 bg-slate-950/80 p-2.5 rounded-xl border border-slate-800">
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-0.5">مجموع الإيداعات الابتدائي ($)</label>
+            <input id="initDepUsd" type="number" step="any" placeholder="0" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2 py-1 text-xs font-extrabold text-emerald-400 num-font" />
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-0.5">مجموع الإيداعات الابتدائي (SYP)</label>
+            <input id="initDepSyp" type="number" step="any" placeholder="0" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2 py-1 text-xs font-extrabold text-emerald-300 num-font" />
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-0.5">مجموع السحوبات الابتدائي ($)</label>
+            <input id="initWdUsd" type="number" step="any" placeholder="0" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2 py-1 text-xs font-extrabold text-rose-400 num-font" />
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-0.5">مجموع السحوبات الابتدائي (SYP)</label>
+            <input id="initWdSyp" type="number" step="any" placeholder="0" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2 py-1 text-xs font-extrabold text-rose-300 num-font" />
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-0.5">مجموع المصروفات الابتدائي ($)</label>
+            <input id="initExpUsd" type="number" step="any" placeholder="0" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2 py-1 text-xs font-extrabold text-amber-400 num-font" />
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-0.5">مجموع المصروفات الابتدائي (SYP)</label>
+            <input id="initExpSyp" type="number" step="any" placeholder="0" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2 py-1 text-xs font-extrabold text-amber-300 num-font" />
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-rose-950/30 border border-rose-500/30 rounded-xl px-3 py-2">
+        <label class="flex items-center gap-2 cursor-pointer select-none">
+          <input id="clearHistoryOnInitCheckbox" type="checkbox" checked class="w-4 h-4 rounded accent-rose-500 cursor-pointer" />
+          <span class="text-[11px] font-bold text-rose-300">🧹 حذف ومسح كل العمليات القديمة من السجل والبدء من الصفر بهذه القيم</span>
+        </label>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <button id="saveInitValuesBtn" type="button" class="py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg transition">
+          حفظ واعتماد القيم ✓
+        </button>
+        <button id="zeroEverythingBtn" type="button" class="py-2.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/40 border border-rose-500/40 text-rose-300 font-bold text-xs transition">
+          تصفير كل شيء لـ (0)
+        </button>
+      </div>
+    </section>
 
     <!-- 1. لوحة الملخص المدمجة بالأعلى -->
     <section class="bg-gradient-to-br from-slate-900 to-slate-950 border border-emerald-500/40 rounded-2xl p-4 shadow-xl space-y-3">
       
-      <!-- الرصيد الكلي -->
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <div>
           <span class="text-[11px] font-bold text-slate-400 block">إجمالي أرصدة الحسابات المفعلة</span>
@@ -62,73 +164,63 @@
         <span id="activeAccountsBadge" class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">0 حسابات</span>
       </div>
 
-      <!-- خانة: لنا من الشركة (تعديل يدوي) -->
-      <div class="bg-slate-950/90 border border-sky-500/30 rounded-xl p-3 space-y-2">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-extrabold text-sky-400">📥 لنا من الشركة (يدوي)</span>
-          <button id="saveCompanyOwedBtn" type="button" class="text-[10px] font-bold bg-sky-600 hover:bg-sky-500 text-white px-3 py-0.5 rounded-lg transition shadow">
-            حفظ
-          </button>
-        </div>
-        <div class="grid grid-cols-2 gap-2.5">
-          <div>
-            <label class="text-[10px] text-slate-400 block mb-0.5">دولار ($)</label>
-            <input id="companyOwedUsdInput" type="number" step="any" placeholder="0" class="w-full rounded-lg bg-slate-900 border border-slate-700 focus:border-sky-500 focus:outline-none px-2.5 py-1.5 text-sm font-extrabold text-sky-300 num-font" />
-          </div>
-          <div>
-            <label class="text-[10px] text-slate-400 block mb-0.5">سوري (SYP)</label>
-            <input id="companyOwedSypInput" type="number" step="any" placeholder="0" class="w-full rounded-lg bg-slate-900 border border-slate-700 focus:border-sky-500 focus:outline-none px-2.5 py-1.5 text-sm font-extrabold text-amber-300 num-font" />
-          </div>
-        </div>
-      </div>
-
-      <!-- تفاصيل أرصدة الحسابات المفعلة -->
       <div class="space-y-1.5 pt-1">
         <div class="flex items-center justify-between text-[11px] text-slate-400 px-1">
           <span>أرصدة الحسابات</span>
-          <a href="settings.html" class="text-emerald-400 hover:underline">إدارة</a>
+          <a href="settings.html" class="text-emerald-400 hover:underline">إدارة الحسابات</a>
         </div>
         <div id="activeAccountsList" class="grid grid-cols-1 gap-1.5"></div>
       </div>
 
-      <!-- إجمالي الإيداعات والسحوبات الكلية -->
-      <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80">
-        <div class="bg-slate-950/70 border border-emerald-500/20 rounded-xl p-2.5 flex items-center justify-between">
-          <div>
-            <span class="text-[10px] text-slate-400 block">إجمالي الإيداعات</span>
-            <span id="allTimeTotalDepositsUsd" class="text-sm font-extrabold text-emerald-400 num-font block mt-0.5">$0</span>
-            <span id="allTimeTotalDepositsSyp" class="text-[10px] font-bold text-emerald-300 num-font block">0 SYP</span>
+      <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/80">
+        <div class="bg-slate-950/70 border border-emerald-500/20 rounded-xl p-2.5">
+          <div class="flex items-center justify-between mb-0.5">
+            <span class="text-[10px] text-slate-400 font-bold">إجمالي الإيداعات</span>
+            <span class="text-[10px]">➕</span>
           </div>
-          <span class="text-xs">➕</span>
+          <span id="allTimeTotalDepositsUsd" class="text-xs sm:text-sm font-extrabold text-emerald-400 num-font block">$0</span>
+          <span id="allTimeTotalDepositsSyp" class="text-[10px] font-bold text-emerald-300 num-font block">0 SYP</span>
         </div>
-        <div class="bg-slate-950/70 border border-rose-500/20 rounded-xl p-2.5 flex items-center justify-between">
-          <div>
-            <span class="text-[10px] text-slate-400 block">إجمالي السحوبات</span>
-            <span id="allTimeTotalWithdrawsUsd" class="text-sm font-extrabold text-rose-400 num-font block mt-0.5">$0</span>
-            <span id="allTimeTotalWithdrawsSyp" class="text-[10px] font-bold text-rose-300 num-font block">0 SYP</span>
+
+        <div class="bg-slate-950/70 border border-rose-500/20 rounded-xl p-2.5">
+          <div class="flex items-center justify-between mb-0.5">
+            <span class="text-[10px] text-slate-400 font-bold">إجمالي السحوبات</span>
+            <span class="text-[10px]">➖</span>
           </div>
-          <span class="text-xs">➖</span>
+          <span id="allTimeTotalWithdrawsUsd" class="text-xs sm:text-sm font-extrabold text-rose-400 num-font block">$0</span>
+          <span id="allTimeTotalWithdrawsSyp" class="text-[10px] font-bold text-rose-300 num-font block">0 SYP</span>
+        </div>
+
+        <div class="bg-slate-950/70 border border-amber-500/20 rounded-xl p-2.5">
+          <div class="flex items-center justify-between mb-0.5">
+            <span class="text-[10px] text-slate-400 font-bold">إجمالي المصروفات</span>
+            <span class="text-[10px]">💸</span>
+          </div>
+          <span id="allTimeTotalExpensesUsd" class="text-xs sm:text-sm font-extrabold text-amber-400 num-font block">$0</span>
+          <span id="allTimeTotalExpensesSyp" class="text-[10px] font-bold text-amber-300 num-font block">0 SYP</span>
         </div>
       </div>
 
     </section>
 
-    <!-- 2. خانة العمليات السريعة (مع الاحتفاظ بالتاريخ المختار) -->
+    <!-- 2. خانة العمليات السريعة (إيداع، سحب، مصروفات، نقل) -->
     <section class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
-      <div class="grid grid-cols-3 bg-slate-950/70 p-1 gap-1 border-b border-slate-800">
-        <button id="modeDepositBtn" type="button" class="py-2 px-1 rounded-xl text-xs font-bold transition bg-emerald-600 text-white shadow">
+      <div class="grid grid-cols-4 bg-slate-950/70 p-1 gap-1 border-b border-slate-800">
+        <button id="modeDepositBtn" type="button" class="py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition bg-emerald-600 text-white shadow">
           ➕ إيداع
         </button>
-        <button id="modeWithdrawBtn" type="button" class="py-2 px-1 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800">
+        <button id="modeWithdrawBtn" type="button" class="py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800">
           ➖ سحب
         </button>
-        <button id="modeTransferBtn" type="button" class="py-2 px-1 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800">
+        <button id="modeExpenseBtn" type="button" class="py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800">
+          💸 مصروفات
+        </button>
+        <button id="modeTransferBtn" type="button" class="py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800">
           🔄 نقل
         </button>
       </div>
 
       <form id="operationForm" class="p-4 space-y-3">
-        <!-- خانة التاريخ مع زر "اليوم" السريع -->
         <div class="bg-slate-950/90 border border-sky-500/30 rounded-xl p-2.5 flex items-center justify-between gap-2">
           <label for="opDate" class="text-xs font-bold text-sky-300 flex items-center gap-1.5">
             <span>📅</span>
@@ -136,7 +228,7 @@
           </label>
           <div class="flex items-center gap-1.5">
             <input id="opDate" type="date" class="rounded-lg bg-slate-900 border border-slate-700 text-xs font-bold text-white px-2.5 py-1.5 num-font focus:border-sky-500 focus:outline-none" />
-            <button id="setTodayBtn" type="button" class="text-[10px] font-bold bg-sky-600/30 hover:bg-sky-600/50 text-sky-200 px-2 py-1.5 rounded-lg transition" title="الرجوع لتاريخ اليوم">اليوم</button>
+            <button id="setTodayBtn" type="button" class="text-[10px] font-bold bg-sky-600/30 hover:bg-sky-600/50 text-sky-200 px-2 py-1.5 rounded-lg transition">اليوم</button>
           </div>
         </div>
 
@@ -155,7 +247,7 @@
         </div>
 
         <div id="singleAccountBox">
-          <label id="singleAccountLabel" for="opAccount" class="block text-[11px] font-bold text-slate-300 mb-1">الحساب</label>
+          <label id="singleAccountLabel" for="opAccount" class="block text-[11px] font-bold text-slate-300 mb-1">إيداع في حساب</label>
           <select id="opAccount" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:outline-none px-3 py-2 text-xs font-semibold text-white"></select>
         </div>
 
@@ -171,14 +263,14 @@
         </div>
 
         <div>
-          <label for="opOpNumber" class="block text-[11px] font-bold text-slate-300 mb-1">رقم العملية / رقم السند (اختياري)</label>
-          <input id="opOpNumber" type="text" placeholder="مثال: 1024 أو رقم الإيصال..." class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:outline-none px-3 py-2 text-xs text-white num-font" />
+          <label id="opNumberLabel" for="opOpNumber" class="block text-[11px] font-bold text-slate-300 mb-1">رقم العملية / بيان (اختياري)</label>
+          <input id="opOpNumber" type="text" placeholder="مثال: 1024 أو سبب المصروف..." class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:outline-none px-3 py-2 text-xs text-white num-font" />
         </div>
 
         <div id="excludeFromTotalBox" class="bg-slate-950/90 border border-slate-800 rounded-xl px-3 py-2">
           <label class="flex items-center gap-2 cursor-pointer select-none">
             <input id="excludeFromTotalCheckbox" type="checkbox" class="w-4 h-4 rounded accent-amber-500 cursor-pointer" />
-            <span class="text-[11px] font-bold text-slate-300">استثناء هذه الحركة من إجمالي الإيداعات/السحوبات</span>
+            <span class="text-[11px] font-bold text-slate-300">استثناء هذه الحركة من إجمالي الإيداعات/السحوبات العام</span>
           </label>
         </div>
 
@@ -188,28 +280,44 @@
       </form>
     </section>
 
-    <!-- 3. السجل التفاعلي -->
+    <!-- 3. السجل التفاعلي المقسّم + شريط تصدير أي يوم محدد -->
     <section class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-3 shadow-lg">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-2.5 flex-wrap gap-2">
-        <h2 class="text-xs font-bold text-slate-200">📜 سجل العمليات حسب الحساب</h2>
-        <div class="flex items-center gap-1.5 flex-wrap">
-          <input id="exportDateInput" type="date" class="rounded-lg bg-slate-950 border border-slate-700 text-[11px] text-white px-2 py-1 num-font" title="اختر اليوم للتصدير" />
-          <button id="exportReportBtn" type="button" class="px-2.5 py-1 rounded-lg bg-sky-600 hover:bg-sky-500 text-[10px] font-bold text-white transition">
-            📥 تصدير تقرير اليوم المختار
+      
+      <div class="bg-slate-950/90 border border-sky-500/30 rounded-xl p-2.5 flex items-center justify-between flex-wrap gap-2">
+        <div class="flex items-center gap-1.5">
+          <span class="text-xs">📥</span>
+          <span class="text-[11px] font-bold text-sky-300">تصدير كشف يوم محدد:</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <input id="exportDateInput" type="date" class="rounded-lg bg-slate-900 border border-slate-700 text-xs font-bold text-white px-2.5 py-1 num-font focus:border-sky-500 focus:outline-none" title="اختر اليوم للتصدير" />
+          <button id="exportReportBtn" type="button" class="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-[11px] font-extrabold text-white shadow transition">
+            تصدير اليوم المختار
           </button>
-          <button id="clearHistoryBtn" type="button" class="text-[10px] text-slate-400 hover:text-rose-400 transition">مسح</button>
         </div>
       </div>
 
-      <!-- أزرار اختيار الحساب -->
       <div id="accountTabsContainer" class="flex items-center gap-1.5 overflow-x-auto pb-1"></div>
 
-      <!-- شريط البحث -->
-      <div class="relative">
-        <input id="historySearchInput" type="text" placeholder="🔍 ابحث برقم العملية أو المبلغ..." class="w-full rounded-xl bg-slate-950 border border-slate-800 focus:border-sky-500 focus:outline-none px-3 py-2 text-xs text-white" />
+      <div id="typeTabsContainer" class="grid grid-cols-4 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+        <button type="button" data-type-tab="ALL" class="py-1.5 px-1 rounded-lg text-[11px] font-extrabold bg-slate-800 text-white shadow transition">
+          📋 الكل (<span id="countAll">0</span>)
+        </button>
+        <button type="button" data-type-tab="deposit" class="py-1.5 px-1 rounded-lg text-[11px] font-bold text-emerald-400 hover:bg-slate-900 transition">
+          ➕ الإيداعات (<span id="countDep">0</span>)
+        </button>
+        <button type="button" data-type-tab="withdraw" class="py-1.5 px-1 rounded-lg text-[11px] font-bold text-rose-400 hover:bg-slate-900 transition">
+          ➖ السحب (<span id="countWd">0</span>)
+        </button>
+        <button type="button" data-type-tab="expense" class="py-1.5 px-1 rounded-lg text-[11px] font-bold text-amber-400 hover:bg-slate-900 transition">
+          💸 المصروفات (<span id="countExp">0</span>)
+        </button>
       </div>
 
-      <div id="accountsHistoryContainer" class="space-y-3 max-h-[460px] overflow-y-auto"></div>
+      <div class="relative">
+        <input id="historySearchInput" type="text" placeholder="🔍 ابحث برقم العملية أو المبلغ أو التاريخ..." class="w-full rounded-xl bg-slate-950 border border-slate-800 focus:border-sky-500 focus:outline-none px-3 py-2 text-xs text-white" />
+      </div>
+
+      <div id="accountsHistoryContainer" class="space-y-3 max-h-[480px] overflow-y-auto"></div>
     </section>
 
   </div>
@@ -220,7 +328,6 @@
 
   <script>
     const STORAGE_KEY = 'simple_balance_mediator_v2';
-    const OLD_KEYS = ['simple_balance_mediator_v1', 'shamcash_state', 'balances_state'];
     const DB_CONFIG_KEY = 'simple_balance_db_config_v1';
 
     const defaultState = {
@@ -229,18 +336,19 @@
         { id: 'acc_2', name: 'حساب 2', usd: 0, syp: 0, active: true }
       ],
       history: [],
-      companyOwedUsd: 0,
-      companyOwedSyp: 0,
       initialDepositUsd: 0,
       initialDepositSyp: 0,
       initialWithdrawUsd: 0,
-      initialWithdrawSyp: 0
+      initialWithdrawSyp: 0,
+      initialExpenseUsd: 0,
+      initialExpenseSyp: 0
     };
 
     let state = loadState();
     let currentMode = 'deposit';
     let dbConfig = loadDbConfig();
     let selectedHistoryAccId = 'ALL';
+    let selectedHistoryType = 'ALL';
     let searchQuery = '';
 
     function loadState() {
@@ -250,12 +358,12 @@
           const parsed = JSON.parse(raw);
           if (parsed && Array.isArray(parsed.accounts)) {
             parsed.history = Array.isArray(parsed.history) ? parsed.history : [];
-            parsed.companyOwedUsd = Number(parsed.companyOwedUsd) || 0;
-            parsed.companyOwedSyp = Number(parsed.companyOwedSyp) || 0;
-            parsed.initialDepositUsd = 0;
-            parsed.initialDepositSyp = 0;
-            parsed.initialWithdrawUsd = 0;
-            parsed.initialWithdrawSyp = 0;
+            parsed.initialDepositUsd = Number(parsed.initialDepositUsd) || 0;
+            parsed.initialDepositSyp = Number(parsed.initialDepositSyp) || 0;
+            parsed.initialWithdrawUsd = Number(parsed.initialWithdrawUsd) || 0;
+            parsed.initialWithdrawSyp = Number(parsed.initialWithdrawSyp) || 0;
+            parsed.initialExpenseUsd = Number(parsed.initialExpenseUsd) || 0;
+            parsed.initialExpenseSyp = Number(parsed.initialExpenseSyp) || 0;
             return parsed;
           }
         }
@@ -299,13 +407,13 @@
           const data = await res.json();
           if (data && Array.isArray(data.accounts)) {
             state.accounts = data.accounts;
-            if (Array.isArray(data.history)) state.history = data.history;
-            if (data.companyOwedUsd !== undefined) state.companyOwedUsd = Number(data.companyOwedUsd) || 0;
-            if (data.companyOwedSyp !== undefined) state.companyOwedSyp = Number(data.companyOwedSyp) || 0;
-            state.initialDepositUsd = 0;
-            state.initialDepositSyp = 0;
-            state.initialWithdrawUsd = 0;
-            state.initialWithdrawSyp = 0;
+            state.history = Array.isArray(data.history) ? data.history : [];
+            state.initialDepositUsd = Number(data.initialDepositUsd) || 0;
+            state.initialDepositSyp = Number(data.initialDepositSyp) || 0;
+            state.initialWithdrawUsd = Number(data.initialWithdrawUsd) || 0;
+            state.initialWithdrawSyp = Number(data.initialWithdrawSyp) || 0;
+            state.initialExpenseUsd = Number(data.initialExpenseUsd) || 0;
+            state.initialExpenseSyp = Number(data.initialExpenseSyp) || 0;
             try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
             renderAll();
           }
@@ -359,7 +467,10 @@
     }
 
     function computeFinalTotals() {
-      let histDepUsd = 0, histDepSyp = 0, histWdUsd = 0, histWdSyp = 0;
+      let histDepUsd = 0, histDepSyp = 0;
+      let histWdUsd = 0, histWdSyp = 0;
+      let histExpUsd = 0, histExpSyp = 0;
+
       (state.history || []).forEach(h => {
         if (h.excludeFromTotal) return;
         const amt = Number(h.amount) || 0;
@@ -367,14 +478,18 @@
           if (h.currency === 'USD') histDepUsd += amt; else histDepSyp += amt;
         } else if (h.type === 'withdraw') {
           if (h.currency === 'USD') histWdUsd += amt; else histWdSyp += amt;
+        } else if (h.type === 'expense') {
+          if (h.currency === 'USD') histExpUsd += amt; else histExpSyp += amt;
         }
       });
 
       return {
-        depUsd: Math.max(0, histDepUsd),
-        depSyp: Math.max(0, histDepSyp),
-        wdUsd: Math.max(0, histWdUsd),
-        wdSyp: Math.max(0, histWdSyp)
+        depUsd: Number(((Number(state.initialDepositUsd) || 0) + histDepUsd).toFixed(2)),
+        depSyp: Math.round((Number(state.initialDepositSyp) || 0) + histDepSyp),
+        wdUsd: Number(((Number(state.initialWithdrawUsd) || 0) + histWdUsd).toFixed(2)),
+        wdSyp: Math.round((Number(state.initialWithdrawSyp) || 0) + histWdSyp),
+        expUsd: Number(((Number(state.initialExpenseUsd) || 0) + histExpUsd).toFixed(2)),
+        expSyp: Math.round((Number(state.initialExpenseSyp) || 0) + histExpSyp)
       };
     }
 
@@ -398,19 +513,13 @@
       document.getElementById('totalSypDisplay').textContent = formatSyp(totalSyp);
       document.getElementById('activeAccountsBadge').textContent = `${activeAccs.length} حسابات`;
 
-      const owedUsd = Number(state.companyOwedUsd) || 0;
-      const owedSyp = Number(state.companyOwedSyp) || 0;
-
-      const usdInput = document.getElementById('companyOwedUsdInput');
-      const sypInput = document.getElementById('companyOwedSypInput');
-      if (document.activeElement !== usdInput) usdInput.value = owedUsd || '';
-      if (document.activeElement !== sypInput) sypInput.value = owedSyp || '';
-
       const totals = computeFinalTotals();
       document.getElementById('allTimeTotalDepositsUsd').textContent = formatUsd(totals.depUsd);
       document.getElementById('allTimeTotalDepositsSyp').textContent = formatSyp(totals.depSyp);
       document.getElementById('allTimeTotalWithdrawsUsd').textContent = formatUsd(totals.wdUsd);
       document.getElementById('allTimeTotalWithdrawsSyp').textContent = formatSyp(totals.wdSyp);
+      document.getElementById('allTimeTotalExpensesUsd').textContent = formatUsd(totals.expUsd);
+      document.getElementById('allTimeTotalExpensesSyp').textContent = formatSyp(totals.expSyp);
 
       const list = document.getElementById('activeAccountsList');
       list.innerHTML = '';
@@ -438,18 +547,294 @@
       });
     }
 
-    function handleCompanyOwedChange(showNotification) {
-      const valUsd = parseFloat(document.getElementById('companyOwedUsdInput').value) || 0;
-      const valSyp = parseFloat(document.getElementById('companyOwedSypInput').value) || 0;
-      state.companyOwedUsd = valUsd;
-      state.companyOwedSyp = valSyp;
-      saveState();
-      if (showNotification) showToast('تم حفظ مبلغ (لنا من الشركة) ✓');
+    // نافذة جرد الساعة 3:00 ظهراً
+    function buildReportData(selectedDate, filterMode) {
+      const allHistory = state.history || [];
+      const dayOps = allHistory.filter(h => {
+        if (h.excludeFromTotal) return false;
+        const dateStr = h.date || new Date().toLocaleDateString('en-CA');
+        if (dateStr !== selectedDate) return false;
+        if (filterMode === 'until_3pm' && h.createdAt) {
+          const d = new Date(h.createdAt);
+          if (d.getHours() >= 15 && (d.getHours() > 15 || d.getMinutes() > 0)) return false;
+        }
+        return true;
+      }).reverse();
+
+      const depositOps = dayOps.filter(op => op.type === 'deposit');
+      const withdrawOps = dayOps.filter(op => op.type === 'withdraw');
+      const expenseOps = dayOps.filter(op => op.type === 'expense');
+      const transferOps = dayOps.filter(op => op.type === 'transfer');
+
+      let dayDepUsd = 0, dayDepSyp = 0;
+      depositOps.forEach(op => {
+        const amt = Number(op.amount) || 0;
+        if (op.currency === 'USD') dayDepUsd += amt; else dayDepSyp += amt;
+      });
+
+      let dayWdUsd = 0, dayWdSyp = 0;
+      withdrawOps.forEach(op => {
+        const amt = Number(op.amount) || 0;
+        if (op.currency === 'USD') dayWdUsd += amt; else dayWdSyp += amt;
+      });
+
+      let dayExpUsd = 0, dayExpSyp = 0;
+      expenseOps.forEach(op => {
+        const amt = Number(op.amount) || 0;
+        if (op.currency === 'USD') dayExpUsd += amt; else dayExpSyp += amt;
+      });
+
+      let reportText = "==================================================\n";
+      reportText += `   تقرير الجرد اليومي (${selectedDate}) - الساعة 3:00 ظهراً   \n`;
+      reportText += "==================================================\n\n";
+
+      reportText += "--- [ ملخص الجرد العام والحسابات الآن ] ---\n";
+      getActiveAccounts().forEach(acc => {
+        reportText += `• رصيد (${acc.name}): ${formatUsd(acc.usd)} | ${formatSyp(acc.syp)}\n`;
+      });
+      reportText += `--------------------------------------------------\n`;
+      reportText += `• التاريخ: ${selectedDate}\n`;
+      reportText += `• عدد عمليات الإيداع: ${depositOps.length} عملية\n`;
+      reportText += `• مجموع الإيداعات: ${formatUsd(dayDepUsd)} | ${formatSyp(dayDepSyp)}\n`;
+      reportText += `• عدد عمليات السحب: ${withdrawOps.length} عملية\n`;
+      reportText += `• مجموع السحوبات: ${formatUsd(dayWdUsd)} | ${formatSyp(dayWdSyp)}\n`;
+      if (expenseOps.length > 0) {
+        reportText += `• عدد عمليات المصروفات: ${expenseOps.length} عملية\n`;
+        reportText += `• مجموع المصروفات: ${formatUsd(dayExpUsd)} | ${formatSyp(dayExpSyp)}\n`;
+      }
+      reportText += "\n==================================================\n";
+      reportText += `➕ أولاً: سجل الإيداعات (${depositOps.length} عمليات) - المجموع: ${formatUsd(dayDepUsd)} | ${formatSyp(dayDepSyp)}\n`;
+      reportText += "==================================================\n";
+
+      if (depositOps.length === 0) {
+        reportText += "لا توجد عمليات إيداع.\n";
+      } else {
+        depositOps.forEach((h, idx) => {
+          const amtStr = h.currency === 'USD' ? formatUsd(h.amount) : formatSyp(h.amount);
+          const accName = h.accountName || 'غير محدد';
+          const opNum = (h.opNumber || h.note) ? `#${h.opNumber || h.note}` : 'بدون رقم';
+          const opDate = h.date || selectedDate;
+          reportText += `${idx + 1}. المبلغ: ${amtStr} | الحساب: ${accName} | رقم العملية: ${opNum} | التاريخ: ${opDate}\n`;
+        });
+      }
+
+      reportText += "\n==================================================\n";
+      reportText += `➖ ثانياً: سجل السحوبات (${withdrawOps.length} عمليات) - المجموع: ${formatUsd(dayWdUsd)} | ${formatSyp(dayWdSyp)}\n`;
+      reportText += "==================================================\n";
+
+      if (withdrawOps.length === 0) {
+        reportText += "لا توجد عمليات سحب.\n";
+      } else {
+        withdrawOps.forEach((h, idx) => {
+          const amtStr = h.currency === 'USD' ? formatUsd(h.amount) : formatSyp(h.amount);
+          const accName = h.accountName || 'غير محدد';
+          const opNum = (h.opNumber || h.note) ? `#${h.opNumber || h.note}` : 'بدون رقم';
+          const opDate = h.date || selectedDate;
+          reportText += `${idx + 1}. المبلغ: ${amtStr} | الحساب: ${accName} | رقم العملية: ${opNum} | التاريخ: ${opDate}\n`;
+        });
+      }
+
+      if (expenseOps.length > 0) {
+        reportText += "\n==================================================\n";
+        reportText += `💸 ثالثاً: سجل المصروفات (${expenseOps.length} عمليات) - المجموع: ${formatUsd(dayExpUsd)} | ${formatSyp(dayExpSyp)}\n`;
+        reportText += "==================================================\n";
+        expenseOps.forEach((h, idx) => {
+          const amtStr = h.currency === 'USD' ? formatUsd(h.amount) : formatSyp(h.amount);
+          const accName = h.accountName || 'غير محدد';
+          const opNum = (h.opNumber || h.note) ? `#${h.opNumber || h.note}` : 'بدون بيان';
+          const opDate = h.date || selectedDate;
+          reportText += `${idx + 1}. المبلغ: ${amtStr} | خُصم من حساب: ${accName} | البيان/الرقم: ${opNum} | التاريخ: ${opDate}\n`;
+        });
+      }
+
+      if (transferOps.length > 0) {
+        reportText += "\n==================================================\n";
+        reportText += `🔄 رابعاً: عمليات النقل بين الحسابات (${transferOps.length} عمليات)\n`;
+        reportText += "==================================================\n";
+        transferOps.forEach((h, idx) => {
+          const amtStr = h.currency === 'USD' ? formatUsd(h.amount) : formatSyp(h.amount);
+          const opNum = (h.opNumber || h.note) ? `#${h.opNumber || h.note}` : 'بدون رقم';
+          const opDate = h.date || selectedDate;
+          reportText += `${idx + 1}. المبلغ: ${amtStr} | من حساب: ${h.fromName} إلى حساب: ${h.toName} | رقم العملية: ${opNum} | التاريخ: ${opDate}\n`;
+        });
+      }
+
+      return {
+        dayOps,
+        depositOps,
+        withdrawOps,
+        expenseOps,
+        dayDepUsd,
+        dayDepSyp,
+        dayWdUsd,
+        dayWdSyp,
+        dayExpUsd,
+        dayExpSyp,
+        reportText
+      };
     }
 
-    document.getElementById('companyOwedUsdInput').addEventListener('input', () => handleCompanyOwedChange(false));
-    document.getElementById('companyOwedSypInput').addEventListener('input', () => handleCompanyOwedChange(false));
-    document.getElementById('saveCompanyOwedBtn').addEventListener('click', () => handleCompanyOwedChange(true));
+    function render3PmModal() {
+      const selectedDate = document.getElementById('inv3PmDateInput').value || new Date().toLocaleDateString('en-CA');
+      const filterMode = document.getElementById('inv3PmFilterMode').value;
+      const data = buildReportData(selectedDate, filterMode);
+      const box = document.getElementById('inv3PmSummaryContent');
+
+      box.innerHTML = `
+        <div class="grid grid-cols-2 gap-2">
+          <div class="bg-slate-950 border border-emerald-500/30 rounded-xl p-2.5">
+            <span class="text-[10px] text-slate-400 block">➕ إيداعات اليوم (${data.depositOps.length} عملية)</span>
+            <span class="text-sm font-extrabold text-emerald-400 num-font block mt-0.5">${formatUsd(data.dayDepUsd)}</span>
+            <span class="text-[10px] font-bold text-emerald-300 num-font">${formatSyp(data.dayDepSyp)}</span>
+          </div>
+          <div class="bg-slate-950 border border-rose-500/30 rounded-xl p-2.5">
+            <span class="text-[10px] text-slate-400 block">➖ سحوبات اليوم (${data.withdrawOps.length} عملية)</span>
+            <span class="text-sm font-extrabold text-rose-400 num-font block mt-0.5">${formatUsd(data.dayWdUsd)}</span>
+            <span class="text-[10px] font-bold text-rose-300 num-font">${formatSyp(data.dayWdSyp)}</span>
+          </div>
+        </div>
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between">
+          <span class="text-[11px] font-bold text-slate-300">⚖️ صافي حركة اليوم (${selectedDate}):</span>
+          <span class="font-extrabold text-sky-400 num-font">${formatUsd(data.dayDepUsd - data.dayWdUsd - data.dayExpUsd)} | ${formatSyp(data.dayDepSyp - data.dayWdSyp - data.dayExpSyp)}</span>
+        </div>
+      `;
+    }
+
+    document.getElementById('show3PmInventoryBtn').addEventListener('click', () => {
+      document.getElementById('inv3PmDateInput').value = document.getElementById('exportDateInput').value || new Date().toLocaleDateString('en-CA');
+      render3PmModal();
+      document.getElementById('daily3PmModal').classList.remove('hidden');
+    });
+
+    document.getElementById('close3PmModalBtn').addEventListener('click', () => {
+      document.getElementById('daily3PmModal').classList.add('hidden');
+    });
+
+    document.getElementById('inv3PmDateInput').addEventListener('change', render3PmModal);
+    document.getElementById('inv3PmFilterMode').addEventListener('change', render3PmModal);
+
+    document.getElementById('export3PmReportBtn').addEventListener('click', () => {
+      const selectedDate = document.getElementById('inv3PmDateInput').value || new Date().toLocaleDateString('en-CA');
+      const filterMode = document.getElementById('inv3PmFilterMode').value;
+      const data = buildReportData(selectedDate, filterMode);
+      const blob = new Blob([data.reportText], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ShamCash_3PM_Report_${selectedDate}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('تم تحميل ملف الجرد بنجاح ✓');
+    });
+
+    document.getElementById('copy3PmReportBtn').addEventListener('click', () => {
+      const selectedDate = document.getElementById('inv3PmDateInput').value || new Date().toLocaleDateString('en-CA');
+      const filterMode = document.getElementById('inv3PmFilterMode').value;
+      const data = buildReportData(selectedDate, filterMode);
+      navigator.clipboard.writeText(data.reportText).then(() => {
+        showToast('تم نسخ الجرد بالكامل للحافظة ✓');
+      });
+    });
+
+    // منبه تلقائي يفتح نافذة الجرد تلقائياً كل يوم الساعة 3:00 ظهراً
+    setInterval(() => {
+      const now = new Date();
+      const todayKey = 'alerted_3pm_' + now.toLocaleDateString('en-CA');
+      if (now.getHours() === 15 && now.getMinutes() === 0 && !sessionStorage.getItem(todayKey)) {
+        sessionStorage.setItem(todayKey, '1');
+        document.getElementById('inv3PmDateInput').value = now.toLocaleDateString('en-CA');
+        render3PmModal();
+        document.getElementById('daily3PmModal').classList.remove('hidden');
+        showToast('🕒 حان موعد جرد الساعة 3:00 ظهراً!');
+      }
+    }, 20000);
+
+    function openInitModal() {
+      const modal = document.getElementById('initModal');
+      const container = document.getElementById('initAccountsContainer');
+      container.innerHTML = '';
+
+      state.accounts.forEach(acc => {
+        const row = document.createElement('div');
+        row.className = 'bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 space-y-1.5';
+        row.innerHTML = `
+          <div class="text-xs font-bold text-white flex items-center justify-between">
+            <span>📁 ${escapeHtml(acc.name)}</span>
+            <span class="text-[10px] ${acc.active ? 'text-emerald-400' : 'text-slate-500'}">${acc.active ? 'مفعل' : 'غير مفعل'}</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[10px] text-slate-400 block mb-0.5">الرصيد بالدولار ($)</label>
+              <input type="number" step="any" data-init-acc-usd="${acc.id}" value="${Number(acc.usd) || 0}" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2 py-1 text-xs font-extrabold text-emerald-400 num-font" />
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400 block mb-0.5">الرصيد بالسوري (SYP)</label>
+              <input type="number" step="any" data-init-acc-syp="${acc.id}" value="${Number(acc.syp) || 0}" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2 py-1 text-xs font-extrabold text-amber-400 num-font" />
+            </div>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+
+      document.getElementById('initDepUsd').value = Number(state.initialDepositUsd) || 0;
+      document.getElementById('initDepSyp').value = Number(state.initialDepositSyp) || 0;
+      document.getElementById('initWdUsd').value = Number(state.initialWithdrawUsd) || 0;
+      document.getElementById('initWdSyp').value = Number(state.initialWithdrawSyp) || 0;
+      document.getElementById('initExpUsd').value = Number(state.initialExpenseUsd) || 0;
+      document.getElementById('initExpSyp').value = Number(state.initialExpenseSyp) || 0;
+
+      modal.classList.remove('hidden');
+    }
+
+    document.getElementById('openInitModalBtn').addEventListener('click', openInitModal);
+    document.getElementById('closeInitModalBtn').addEventListener('click', () => {
+      document.getElementById('initModal').classList.add('hidden');
+    });
+
+    document.getElementById('saveInitValuesBtn').addEventListener('click', () => {
+      const shouldClearHistory = document.getElementById('clearHistoryOnInitCheckbox').checked;
+
+      state.accounts.forEach(acc => {
+        const usdIn = document.querySelector(`input[data-init-acc-usd="${acc.id}"]`);
+        const sypIn = document.querySelector(`input[data-init-acc-syp="${acc.id}"]`);
+        if (usdIn) acc.usd = Number(parseFloat(usdIn.value || 0).toFixed(2));
+        if (sypIn) acc.syp = Math.round(parseFloat(sypIn.value || 0));
+      });
+
+      state.initialDepositUsd = parseFloat(document.getElementById('initDepUsd').value) || 0;
+      state.initialDepositSyp = parseFloat(document.getElementById('initDepSyp').value) || 0;
+      state.initialWithdrawUsd = parseFloat(document.getElementById('initWdUsd').value) || 0;
+      state.initialWithdrawSyp = parseFloat(document.getElementById('initWdSyp').value) || 0;
+      state.initialExpenseUsd = parseFloat(document.getElementById('initExpUsd').value) || 0;
+      state.initialExpenseSyp = parseFloat(document.getElementById('initExpSyp').value) || 0;
+
+      if (shouldClearHistory) {
+        state.history = [];
+      }
+
+      saveState();
+      renderAll();
+      document.getElementById('initModal').classList.add('hidden');
+      showToast('تم حفظ القيم الابتدائية وتحديث النظام بنجاح ✓');
+    });
+
+    document.getElementById('zeroEverythingBtn').addEventListener('click', () => {
+      if (!confirm('هل أنت متأكد من تصفير جميع الأرصدة والمجاميع ومسح السجل بالكامل إلى (0)؟')) return;
+      state.accounts.forEach(acc => { acc.usd = 0; acc.syp = 0; });
+      state.history = [];
+      state.initialDepositUsd = 0;
+      state.initialDepositSyp = 0;
+      state.initialWithdrawUsd = 0;
+      state.initialWithdrawSyp = 0;
+      state.initialExpenseUsd = 0;
+      state.initialExpenseSyp = 0;
+      saveState();
+      renderAll();
+      document.getElementById('initModal').classList.add('hidden');
+      showToast('تم تصفير كل شيء إلى الصفر تماماً ✓');
+    });
 
     function renderAccountSelects() {
       const activeAccs = getActiveAccounts();
@@ -499,11 +884,11 @@
       allBtn.type = 'button';
       allBtn.setAttribute('data-tab-acc-id', 'ALL');
       allBtn.className = isAllSelected
-        ? 'px-3 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-600 text-white shadow flex items-center gap-1.5 whitespace-nowrap transition'
+        ? 'px-3 py-1.5 rounded-xl text-xs font-extrabold bg-sky-600 text-white shadow flex items-center gap-1.5 whitespace-nowrap transition'
         : 'px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-950 text-slate-400 hover:text-white border border-slate-800 flex items-center gap-1.5 whitespace-nowrap transition';
       allBtn.innerHTML = `
-        <span>🌐 كل العمليات</span>
-        <span class="text-[10px] px-1.5 py-0.5 rounded-full ${isAllSelected ? 'bg-emerald-700 text-emerald-100' : 'bg-slate-900 text-slate-400'}">${allHistory.length}</span>
+        <span>🌐 كل الحسابات</span>
+        <span class="text-[10px] px-1.5 py-0.5 rounded-full ${isAllSelected ? 'bg-sky-700 text-sky-100' : 'bg-slate-900 text-slate-400'}">${allHistory.length}</span>
       `;
       tabsContainer.appendChild(allBtn);
 
@@ -525,27 +910,53 @@
       });
 
       const currentAcc = selectedHistoryAccId === 'ALL' ? null : activeAccs.find(a => a.id === selectedHistoryAccId);
+
+      const accScopedItems = allHistory.filter(h =>
+        selectedHistoryAccId === 'ALL' ? true : doesItemBelongToAccount(h, currentAcc)
+      );
+
+      document.getElementById('countAll').textContent = accScopedItems.length;
+      document.getElementById('countDep').textContent = accScopedItems.filter(h => h.type === 'deposit').length;
+      document.getElementById('countWd').textContent = accScopedItems.filter(h => h.type === 'withdraw').length;
+      document.getElementById('countExp').textContent = accScopedItems.filter(h => h.type === 'expense').length;
+
+      document.querySelectorAll('#typeTabsContainer button[data-type-tab]').forEach(btn => {
+        const tabType = btn.getAttribute('data-type-tab');
+        if (tabType === selectedHistoryType) {
+          btn.className = 'py-1.5 px-1 rounded-lg text-[11px] font-extrabold bg-slate-800 text-white shadow border border-slate-700 transition';
+        } else {
+          const colorMap = {
+            ALL: 'text-slate-300',
+            deposit: 'text-emerald-400',
+            withdraw: 'text-rose-400',
+            expense: 'text-amber-400'
+          };
+          btn.className = `py-1.5 px-1 rounded-lg text-[11px] font-bold ${colorMap[tabType] || 'text-slate-300'} hover:bg-slate-900 transition`;
+        }
+      });
+
       const q = searchQuery.trim().toLowerCase();
 
-      const accItems = allHistory.filter(h => {
-        const belongs = selectedHistoryAccId === 'ALL' ? true : doesItemBelongToAccount(h, currentAcc);
-        if (!belongs) return false;
+      const filteredItems = accScopedItems.filter(h => {
+        if (selectedHistoryType !== 'ALL' && h.type !== selectedHistoryType) return false;
         if (!q) return true;
 
         const opNumMatch = String(h.opNumber || h.note || '').toLowerCase().includes(q);
         const amountMatch = String(h.amount || '').toLowerCase().includes(q);
-        return opNumMatch || amountMatch;
+        const dateMatch = String(h.date || '').toLowerCase().includes(q);
+        const accMatch = String(h.accountName || '').toLowerCase().includes(q);
+        return opNumMatch || amountMatch || dateMatch || accMatch;
       });
 
-      if (accItems.length === 0) {
+      if (filteredItems.length === 0) {
         container.innerHTML = `<div class="bg-slate-950/70 border border-slate-800 rounded-xl p-4 text-[11px] text-slate-400 text-center">
-          ${q ? 'لا توجد عمليات مطابقة لبحثك' : 'لا توجد حركات مسجلة في هذا القسم بعد'}
+          لا توجد عمليات مسجلة في هذا السجل حالياً
         </div>`;
         return;
       }
 
       const daysMap = {};
-      accItems.forEach(h => {
+      filteredItems.forEach(h => {
         const dateStr = h.date || new Date().toLocaleDateString('en-CA');
         if (!daysMap[dateStr]) daysMap[dateStr] = [];
         daysMap[dateStr].push(h);
@@ -560,7 +971,7 @@
 
         let dayHtml = `
           <div class="flex items-center justify-between text-[11px] text-sky-400 font-bold border-b border-slate-800 pb-1.5">
-            <span>📅 تاريخ اليوم: ${day}</span>
+            <span>📅 يوم: ${day}</span>
             <span class="text-[10px] bg-slate-900 px-2 py-0.5 rounded text-slate-400">${dayItems.length} حركات</span>
           </div>
           <div class="space-y-1.5">
@@ -568,30 +979,31 @@
 
         dayItems.forEach(h => {
           const amountStr = h.currency === 'USD' ? formatUsd(h.amount) : formatSyp(h.amount);
+          const itemDate = h.date || day;
           let badge = '', desc = '';
           const targetAccName = escapeHtml(h.accountName || '');
 
           if (h.type === 'deposit') {
             badge = `<span class="text-emerald-400 font-bold">➕ إيداع</span>`;
-            desc = h.excludeFromTotal ? `مستثنى من الإجمالي` : (selectedHistoryAccId === 'ALL' ? `إلى ${targetAccName}` : `إيداع`);
+            desc = `حساب: ${targetAccName}`;
           } else if (h.type === 'withdraw') {
             badge = `<span class="text-rose-400 font-bold">➖ سحب</span>`;
-            desc = h.excludeFromTotal ? `مستثنى من الإجمالي` : (selectedHistoryAccId === 'ALL' ? `من ${targetAccName}` : `سحب`);
+            desc = `حساب: ${targetAccName}`;
+          } else if (h.type === 'expense') {
+            badge = `<span class="text-amber-400 font-bold">💸 مصروف</span>`;
+            desc = `خصم من: ${targetAccName}`;
           } else {
-            if (currentAcc && (h.fromId === currentAcc.id || h.fromName === currentAcc.name)) {
-              badge = `<span class="text-sky-400 font-bold">🔄 نقل صادر</span>`;
-              desc = `إلى ${escapeHtml(h.toName)}`;
-            } else if (currentAcc) {
-              badge = `<span class="text-emerald-400 font-bold">🔄 نقل وارد</span>`;
-              desc = `من ${escapeHtml(h.fromName)}`;
-            } else {
-              badge = `<span class="text-sky-400 font-bold">🔄 نقل</span>`;
-              desc = `من ${escapeHtml(h.fromName)} إلى ${escapeHtml(h.toName)}`;
-            }
+            badge = `<span class="text-sky-400 font-bold">🔄 نقل</span>`;
+            desc = `من ${escapeHtml(h.fromName)} إلى ${escapeHtml(h.toName)}`;
+          }
+
+          if (h.excludeFromTotal) {
+            desc += ` • مستثنى من المجموع`;
           }
 
           const refValue = h.opNumber || h.note || '';
           const opNumHtml = refValue ? `<span class="text-sky-300 font-semibold bg-sky-500/10 px-2 py-0.5 rounded text-[10px] num-font">🔢 #${escapeHtml(refValue)}</span>` : '';
+          const dateBadgeHtml = `<span class="text-slate-400 bg-slate-950 border border-slate-800 px-1.5 py-0.5 rounded text-[10px] num-font">📅 ${itemDate}</span>`;
 
           dayHtml += `
             <div class="bg-slate-900 border border-slate-800/70 rounded-lg px-2.5 py-2 flex items-center justify-between text-xs gap-2">
@@ -600,8 +1012,9 @@
                 <span class="font-extrabold text-white num-font">${amountStr}</span>
                 <span class="text-slate-400 text-[11px]">(${desc})</span>
                 ${opNumHtml}
+                ${dateBadgeHtml}
               </div>
-              <button type="button" data-undo-id="${h.id}" class="text-[10px] text-rose-400 hover:underline font-semibold whitespace-nowrap">تراجع</button>
+              <button type="button" data-undo-id="${h.id}" class="text-[10px] text-rose-400 hover:underline font-semibold whitespace-nowrap">حذف / تراجع</button>
             </div>
           `;
         });
@@ -619,6 +1032,13 @@
       renderHistory();
     });
 
+    document.getElementById('typeTabsContainer').addEventListener('click', e => {
+      const btn = e.target.closest('button[data-type-tab]');
+      if (!btn) return;
+      selectedHistoryType = btn.getAttribute('data-type-tab');
+      renderHistory();
+    });
+
     document.getElementById('historySearchInput').addEventListener('input', e => {
       searchQuery = e.target.value;
       renderHistory();
@@ -628,34 +1048,47 @@
       currentMode = mode;
       const depBtn = document.getElementById('modeDepositBtn');
       const wdBtn = document.getElementById('modeWithdrawBtn');
+      const expBtn = document.getElementById('modeExpenseBtn');
       const trBtn = document.getElementById('modeTransferBtn');
       const singleBox = document.getElementById('singleAccountBox');
       const transferBox = document.getElementById('transferAccountsBox');
       const singleLabel = document.getElementById('singleAccountLabel');
+      const opNumLabel = document.getElementById('opNumberLabel');
       const submitBtn = document.getElementById('submitOpBtn');
       const excludeBox = document.getElementById('excludeFromTotalBox');
 
-      const baseClass = 'py-2 px-1 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800';
-      depBtn.className = baseClass; wdBtn.className = baseClass; trBtn.className = baseClass;
+      const baseClass = 'py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800';
+      depBtn.className = baseClass; wdBtn.className = baseClass; expBtn.className = baseClass; trBtn.className = baseClass;
 
       if (mode === 'deposit') {
-        depBtn.className = 'py-2 px-1 rounded-xl text-xs font-bold transition bg-emerald-600 text-white shadow';
+        depBtn.className = 'py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition bg-emerald-600 text-white shadow';
         singleBox.classList.remove('hidden'); transferBox.classList.add('hidden');
         excludeBox.classList.remove('hidden');
         singleLabel.textContent = 'إيداع في حساب';
+        opNumLabel.textContent = 'رقم العملية / رقم السند (اختياري)';
         submitBtn.textContent = 'تأكيد الإيداع وتحديث الرصيد';
         submitBtn.className = 'w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition';
       } else if (mode === 'withdraw') {
-        wdBtn.className = 'py-2 px-1 rounded-xl text-xs font-bold transition bg-rose-600 text-white shadow';
+        wdBtn.className = 'py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition bg-rose-600 text-white shadow';
         singleBox.classList.remove('hidden'); transferBox.classList.add('hidden');
         excludeBox.classList.remove('hidden');
         singleLabel.textContent = 'سحب من حساب';
+        opNumLabel.textContent = 'رقم العملية / رقم السند (اختياري)';
         submitBtn.textContent = 'تأكيد السحب وتحديث الرصيد';
         submitBtn.className = 'w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md transition';
+      } else if (mode === 'expense') {
+        expBtn.className = 'py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition bg-amber-600 text-white shadow';
+        singleBox.classList.remove('hidden'); transferBox.classList.add('hidden');
+        excludeBox.classList.add('hidden');
+        singleLabel.textContent = 'خصم المصروف من حساب';
+        opNumLabel.textContent = 'بيان المصروف / رقم العملية (اختياري)';
+        submitBtn.textContent = 'تأكيد المصروف وخصمه من الرصيد';
+        submitBtn.className = 'w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-md transition';
       } else {
-        trBtn.className = 'py-2 px-1 rounded-xl text-xs font-bold transition bg-sky-600 text-white shadow';
+        trBtn.className = 'py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition bg-sky-600 text-white shadow';
         singleBox.classList.add('hidden'); transferBox.classList.remove('hidden');
         excludeBox.classList.add('hidden');
+        opNumLabel.textContent = 'رقم العملية / ملاحظة (اختياري)';
         submitBtn.textContent = 'تأكيد النقل بين الحسابين';
         submitBtn.className = 'w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs shadow-md transition';
       }
@@ -663,6 +1096,7 @@
 
     document.getElementById('modeDepositBtn').addEventListener('click', () => setMode('deposit'));
     document.getElementById('modeWithdrawBtn').addEventListener('click', () => setMode('withdraw'));
+    document.getElementById('modeExpenseBtn').addEventListener('click', () => setMode('expense'));
     document.getElementById('modeTransferBtn').addEventListener('click', () => setMode('transfer'));
 
     const todayStr = new Date().toLocaleDateString('en-CA');
@@ -670,24 +1104,30 @@
     opDateInput.value = todayStr;
     document.getElementById('exportDateInput').value = todayStr;
 
-    // زر "اليوم" السريع ليعيد التاريخ لتاريخ اليوم بضغطة واحدة
     document.getElementById('setTodayBtn').addEventListener('click', () => {
       opDateInput.value = todayStr;
-      showToast('تم العودة لتاريخ اليوم');
+      showToast('تم ضبط التاريخ على اليوم');
+    });
+
+    opDateInput.addEventListener('change', () => {
+      if (opDateInput.value) {
+        document.getElementById('exportDateInput').value = opDateInput.value;
+      }
     });
 
     document.getElementById('operationForm').addEventListener('submit', e => {
       e.preventDefault();
       const amount = parseFloat(document.getElementById('opAmount').value);
       const currency = document.getElementById('opCurrency').value;
-      const opDate = opDateInput.value || todayStr; // يبقى التاريخ محتفظاً بقيمته التي أدخلها المستخدم لتسهيل إدخال عمليات متتالية لنفس اليوم القديم
+      const opDate = opDateInput.value || todayStr;
       const opNumber = document.getElementById('opOpNumber').value.trim().replace(/^#+/, '');
       const excludeFromTotal = document.getElementById('excludeFromTotalCheckbox').checked;
       if (!amount || amount <= 0) return;
 
-      const nowTimestamp = new Date(opDate + 'T12:00:00').getTime() || Date.now();
+      const realNow = Date.now();
+      const nowTimestamp = new Date(opDate + 'T12:00:00').getTime() || realNow;
 
-      if (currentMode === 'deposit' || currentMode === 'withdraw') {
+      if (currentMode === 'deposit' || currentMode === 'withdraw' || currentMode === 'expense') {
         const accId = document.getElementById('opAccount').value;
         const acc = state.accounts.find(a => a.id === accId);
         if (!acc) return;
@@ -700,18 +1140,21 @@
         }
 
         state.history.unshift({
-          id: 'h_' + nowTimestamp + '_' + Math.floor(Math.random()*1000),
+          id: 'h_' + nowTimestamp + '_' + Math.floor(Math.random() * 1000),
+          createdAt: realNow,
           date: opDate,
           type: currentMode,
-          excludeFromTotal,
+          excludeFromTotal: currentMode === 'expense' ? false : excludeFromTotal,
           amount,
           currency,
           opNumber,
           accountId: acc.id,
           accountName: acc.name
         });
-        selectedHistoryAccId = acc.id;
-        showToast(currentMode === 'deposit' ? 'تمت إضافة المبلغ لتاريخ ' + opDate : 'تم خصم المبلغ لتاريخ ' + opDate);
+
+        if (currentMode === 'deposit') showToast('تم تسجيل الإيداع وتحديث الرصيد ✓');
+        else if (currentMode === 'withdraw') showToast('تم تسجيل السحب وخصمه من الرصيد ✓');
+        else showToast('تم تسجيل المصروف وخصمه من الحساب والمجموع ✓');
       } else if (currentMode === 'transfer') {
         const fromId = document.getElementById('fromAccount').value;
         const toId = document.getElementById('toAccount').value;
@@ -729,11 +1172,12 @@
           toAcc.usd = Number((Number(toAcc.usd || 0) + amount).toFixed(2));
         } else {
           fromAcc.syp = Math.round(Number(fromAcc.syp || 0) - amount);
-          fromAcc.syp = Math.round(Number(fromAcc.syp || 0) + amount);
+          toAcc.syp = Math.round(Number(toAcc.syp || 0) + amount);
         }
 
         state.history.unshift({
-          id: 'h_' + nowTimestamp + '_' + Math.floor(Math.random()*1000),
+          id: 'h_' + nowTimestamp + '_' + Math.floor(Math.random() * 1000),
+          createdAt: realNow,
           date: opDate,
           type: 'transfer',
           amount,
@@ -744,7 +1188,6 @@
           toId: toAcc.id,
           toName: toAcc.name
         });
-        selectedHistoryAccId = fromAcc.id;
         showToast(`تم نقل المبلغ بتاريخ ${opDate}`);
       }
 
@@ -754,7 +1197,6 @@
       document.getElementById('opOpNumber').value = '';
       document.getElementById('excludeFromTotalCheckbox').checked = false;
       document.getElementById('opCurrency').value = 'USD';
-      // ملاحظة: لا نعيد تعيين opDate هنا لكي يبقى الحقل على نفس التاريخ القديم لتسهيل إدخال عدة عمليات متتالية بنفس التاريخ!
     });
 
     document.getElementById('accountsHistoryContainer').addEventListener('click', e => {
@@ -764,7 +1206,7 @@
       const item = state.history.find(h => h.id === id);
       if (!item) return;
 
-      if (item.type === 'deposit' || item.type === 'withdraw') {
+      if (item.type === 'deposit' || item.type === 'withdraw' || item.type === 'expense') {
         const acc = state.accounts.find(a => a.id === item.accountId || a.name === item.accountName);
         if (acc) {
           const reverseDelta = item.type === 'deposit' ? -item.amount : item.amount;
@@ -785,70 +1227,25 @@
       }
 
       state.history = state.history.filter(h => h.id !== id);
-      saveState(); renderAll();
-      showToast('تم التراجع عن العملية');
-    });
-
-    document.getElementById('clearHistoryBtn').addEventListener('click', () => {
-      if (!confirm('هل أنت متأكد من مسح سجل العمليات بالكامل؟')) return;
-      state.history = [];
-      saveState(); renderHistory();
-      showToast('تم مسح السجل');
+      saveState();
+      renderAll();
+      showToast('تم التراجع عن العملية وتعديل الرصيد');
     });
 
     document.getElementById('exportReportBtn').addEventListener('click', () => {
       const selectedDate = document.getElementById('exportDateInput').value;
       if (!selectedDate) {
-        showToast('الرجاء اختيار التاريخ أولاً من خانة التاريخ بجانب الزر');
+        showToast('الرجاء اختيار التاريخ أولاً');
         return;
       }
 
-      const allHistory = state.history || [];
-      const dayOps = allHistory.filter(h => {
-        if (h.excludeFromTotal) return false;
-        const dateStr = h.date || new Date().toLocaleDateString('en-CA');
-        return dateStr === selectedDate;
-      });
-
-      if (dayOps.length === 0) {
+      const data = buildReportData(selectedDate, 'all_day');
+      if (data.dayOps.length === 0) {
         showToast(`لا توجد عمليات مسجلة في تاريخ ${selectedDate}`);
         return;
       }
 
-      let dayDepUsd = 0, dayDepSyp = 0, dayWdUsd = 0, dayWdSyp = 0;
-      dayOps.forEach(op => {
-        const amt = Number(op.amount) || 0;
-        if (op.type === 'deposit') {
-          if (op.currency === 'USD') dayDepUsd += amt; else dayDepSyp += amt;
-        } else if (op.type === 'withdraw') {
-          if (op.currency === 'USD') dayWdUsd += amt; else dayWdSyp += amt;
-        }
-      });
-
-      let reportText = "====================================\n";
-      reportText += `      تقرير يوم: ${selectedDate}      \n`;
-      reportText += "====================================\n\n";
-
-      reportText += `• مجموع إيداعات هذا اليوم: USD ${dayDepUsd} | SYP ${dayDepSyp}\n`;
-      reportText += `• مجموع سحوبات هذا اليوم: USD ${dayWdUsd} | SYP ${dayWdSyp}\n`;
-      reportText += `• إجمالي عدد الحركات في هذا اليوم: ${dayOps.length} عملية\n\n`;
-
-      reportText += "--- تفصيل العمليات والحسابات ---\n";
-      dayOps.forEach((h, idx) => {
-        const refVal = h.opNumber || h.note || '';
-        const opNumStr = refVal ? ` [رقم العملية: #${refVal}]` : '';
-        const accName = h.accountName || (h.fromName ? `${h.fromName} إلى ${h.toName}` : 'حساب عام');
-
-        if (h.type === 'deposit') {
-          reportText += `${idx + 1}. [إيداع] - الحساب: (${accName}) - المبلغ: ${h.amount} ${h.currency}${opNumStr}\n`;
-        } else if (h.type === 'withdraw') {
-          reportText += `${idx + 1}. [سحب] - الحساب: (${accName}) - المبلغ: ${h.amount} ${h.currency}${opNumStr}\n`;
-        } else if (h.type === 'transfer') {
-          reportText += `${idx + 1}. [نقل] - من (${h.fromName}) إلى (${h.toName}) - المبلغ: ${h.amount} ${h.currency}${opNumStr}\n`;
-        }
-      });
-
-      const blob = new Blob([reportText], { type: 'text/plain;charset=utf-8' });
+      const blob = new Blob([data.reportText], { type: 'text/plain;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
