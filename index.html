@@ -93,7 +93,6 @@
         </div>
       </div>
 
-      <!-- خيار المسح غير مفعل افتراضياً لمنع أي مسح بالخطأ -->
       <div class="bg-rose-950/30 border border-rose-500/30 rounded-xl px-3 py-2">
         <label class="flex items-center gap-2 cursor-pointer select-none">
           <input id="clearHistoryOnInitCheckbox" type="checkbox" class="w-4 h-4 rounded accent-rose-500 cursor-pointer" />
@@ -230,26 +229,44 @@
       </form>
     </section>
 
-    <!-- 3. السجل التفاعلي المقسّم حسب دورات الجرد -->
+    <!-- 3. السجل التفاعلي + التصدير اليومي (يوم واحد أو كل يوم بيومه) + حمل سجلات قديمة -->
     <section class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-3 shadow-lg">
       
-      <div class="bg-slate-950/90 border border-sky-500/30 rounded-xl p-2.5 space-y-2">
+      <!-- قسم التصدير اليومي -->
+      <div class="bg-slate-950/90 border border-sky-500/30 rounded-xl p-2.5 space-y-2.5">
         <div class="flex items-center justify-between flex-wrap gap-2">
           <div class="flex items-center gap-1.5">
             <span class="text-xs">📥</span>
-            <span class="text-[11px] font-bold text-sky-300">تصدير جرد يوم (من 3 ظهراً لـ 3 ظهراً):</span>
+            <span class="text-[11px] font-bold text-sky-300">تصدير الجرد اليومي:</span>
           </div>
-          <div class="flex items-center gap-1.5">
+          <div class="flex items-center gap-1.5 flex-wrap">
             <input id="exportDateInput" type="date" class="rounded-lg bg-slate-900 border border-slate-700 text-xs font-bold text-white px-2.5 py-1 num-font focus:border-sky-500 focus:outline-none" />
-            <button id="exportReportBtn" type="button" class="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-[11px] font-extrabold text-white shadow transition">
-              تحميل التقرير (.txt)
+            <button id="exportReportBtn" type="button" class="px-2.5 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-[11px] font-extrabold text-white shadow transition" title="تحميل تقرير اليوم المحدد فقط">
+              تصدير اليوم المختار
             </button>
-            <button id="copyReportBtn" type="button" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-[11px] font-extrabold text-white shadow transition">
+            <button id="exportAllDaysBtn" type="button" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-[11px] font-extrabold text-white shadow transition" title="تحميل تقرير مرتب لكل الأيام المسجلة كل يوم بيومه">
+              📚 تصدير كل يوم بيومه
+            </button>
+            <button id="copyReportBtn" type="button" class="px-2 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-[11px] font-extrabold text-white shadow transition" title="نسخ تقرير اليوم المختار">
               📋 نسخ
             </button>
           </div>
         </div>
         <div id="exportShiftPeriodLabel" class="text-[10px] text-amber-300 font-bold"></div>
+
+        <!-- شريط حمل واسترجاع السجلات القديمة والنسخ الاحتياطي -->
+        <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between flex-wrap gap-2">
+          <span class="text-[10px] font-bold text-slate-400">🗄️ النسخ الاحتياطي وحمل السجلات القديمة:</span>
+          <div class="flex items-center gap-1.5">
+            <button id="downloadBackupJsonBtn" type="button" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[10px] font-bold text-emerald-300 transition">
+              💾 حفظ نسخة سجل (.json)
+            </button>
+            <button id="triggerImportJsonBtn" type="button" class="px-2.5 py-1 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/40 text-[10px] font-bold text-amber-300 transition">
+              📂 حمل سجلات قديمة
+            </button>
+            <input id="importJsonFileInput" type="file" accept=".json,application/json" class="hidden" />
+          </div>
+        </div>
       </div>
 
       <div id="accountTabsContainer" class="flex items-center gap-1.5 overflow-x-auto pb-1"></div>
@@ -283,9 +300,6 @@
   </div>
 
   <script>
-    // =========================================================================
-    // رابط Firebase الخاص بك مثبت هنا ليتزامن الموبايل واللابتوب تلقائياً:
-    // =========================================================================
     const HARDCODED_FIREBASE_URL = 'https://shamcashapp-46c89-default-rtdb.firebaseio.com';
     const HARDCODED_SECRET_KEY   = 'my_balances';
 
@@ -515,7 +529,7 @@
       document.getElementById('toastText').textContent = msg;
       box.classList.remove('hidden');
       if (window._toastTimer) clearTimeout(window._toastTimer);
-      window._toastTimer = setTimeout(() => box.classList.add('hidden'), 2500);
+      window._toastTimer = setTimeout(() => box.classList.add('hidden'), 2800);
     }
 
     function formatUsd(val) {
@@ -1110,7 +1124,8 @@
       showToast('تم حذف العملية ومزامنة التعديل ✓');
     });
 
-    function generateShiftReportText(selectedShiftDate) {
+    // توليد نص تقرير ليوم جرد محدد (مع خيار تضمين أو إخفاء الترويسة العامة)
+    function generateSingleShiftBlock(selectedShiftDate) {
       const allHistory = state.history || [];
       const dayOps = allHistory.filter(h => {
         if (h.excludeFromTotal) return false;
@@ -1129,83 +1144,69 @@
       withdrawOps.forEach(op => { dayWdUsd += Number(op.amount) || 0; });
       expenseOps.forEach(op => { dayExpUsd += Number(op.amount) || 0; });
 
-      let reportText = "==================================================\n";
-      reportText += `         تقرير جرد يوم: ${selectedShiftDate}         \n`;
-      reportText += `   (${getShiftWindowText(selectedShiftDate)})   \n`;
-      reportText += "==================================================\n\n";
+      let block = "==================================================\n";
+      block += `         📅 جرد يوم: ${selectedShiftDate}         \n`;
+      block += `   (${getShiftWindowText(selectedShiftDate)})   \n`;
+      block += "==================================================\n";
 
-      reportText += "--- [ ملخص الجرد ($) ] ---\n";
-      reportText += `• يوم الجرد: ${selectedShiftDate}\n`;
-      reportText += `• فترة الجرد: ${getShiftWindowText(selectedShiftDate)}\n`;
-      reportText += `• عدد عمليات الإيداع: ${depositOps.length} عملية\n`;
-      reportText += `• مجموع الإيداعات: ${formatUsd(dayDepUsd)}\n`;
-      reportText += `• عدد عمليات السحب: ${withdrawOps.length} عملية\n`;
-      reportText += `• مجموع السحوبات: ${formatUsd(dayWdUsd)}\n`;
+      block += `• عدد الإيداعات: ${depositOps.length} | مجموع الإيداعات: ${formatUsd(dayDepUsd)}\n`;
+      block += `• عدد السحوبات: ${withdrawOps.length} | مجموع السحوبات: ${formatUsd(dayWdUsd)}\n`;
       if (expenseOps.length > 0) {
-        reportText += `• عدد عمليات المصروفات: ${expenseOps.length} عملية\n`;
-        reportText += `• مجموع المصروفات: ${formatUsd(dayExpUsd)}\n`;
+        block += `• عدد المصروفات: ${expenseOps.length} | مجموع المصروفات: ${formatUsd(dayExpUsd)}\n`;
       }
-      reportText += `• صافي جرد اليوم: ${formatUsd(dayDepUsd - dayWdUsd - dayExpUsd)}\n`;
+      block += `• صافي حركة اليوم: ${formatUsd(dayDepUsd - dayWdUsd - dayExpUsd)}\n`;
+      block += "--------------------------------------------------\n";
 
-      reportText += "\n==================================================\n";
-      reportText += `➕ أولاً: سجل الإيداعات (${depositOps.length} عمليات) - المجموع: ${formatUsd(dayDepUsd)}\n`;
-      reportText += "==================================================\n";
-
+      block += `➕ الإيداعات (${depositOps.length}):\n`;
       if (depositOps.length === 0) {
-        reportText += "لا توجد عمليات إيداع في هذا الجرد.\n";
+        block += "   لا يوجد.\n";
       } else {
         depositOps.forEach((h, idx) => {
           const amtStr = formatUsd(h.amount);
           const accName = h.accountName || 'غير محدد';
           const opNum = (h.opNumber || h.note) ? `#${h.opNumber || h.note}` : 'بدون رقم';
           const timeInfo = h.timeStr ? ` (${h.timeStr})` : '';
-          reportText += `${idx + 1}. المبلغ: ${amtStr} | الحساب: ${accName} | رقم العملية: ${opNum} | التاريخ: ${selectedShiftDate}${timeInfo}\n`;
+          block += `   ${idx + 1}. ${amtStr} | حساب: ${accName} | عملية: ${opNum} | ${selectedShiftDate}${timeInfo}\n`;
         });
       }
 
-      reportText += "\n==================================================\n";
-      reportText += `➖ ثانياً: سجل السحوبات (${withdrawOps.length} عمليات) - المجموع: ${formatUsd(dayWdUsd)}\n`;
-      reportText += "==================================================\n";
-
+      block += `\n➖ السحوبات (${withdrawOps.length}):\n`;
       if (withdrawOps.length === 0) {
-        reportText += "لا توجد عمليات سحب في هذا الجرد.\n";
+        block += "   لا يوجد.\n";
       } else {
         withdrawOps.forEach((h, idx) => {
           const amtStr = formatUsd(h.amount);
           const accName = h.accountName || 'غير محدد';
           const opNum = (h.opNumber || h.note) ? `#${h.opNumber || h.note}` : 'بدون رقم';
           const timeInfo = h.timeStr ? ` (${h.timeStr})` : '';
-          reportText += `${idx + 1}. المبلغ: ${amtStr} | الحساب: ${accName} | رقم العملية: ${opNum} | التاريخ: ${selectedShiftDate}${timeInfo}\n`;
+          block += `   ${idx + 1}. ${amtStr} | حساب: ${accName} | عملية: ${opNum} | ${selectedShiftDate}${timeInfo}\n`;
         });
       }
 
       if (expenseOps.length > 0) {
-        reportText += "\n==================================================\n";
-        reportText += `💸 ثالثاً: سجل المصروفات (${expenseOps.length} عمليات) - المجموع: ${formatUsd(dayExpUsd)}\n`;
-        reportText += "==================================================\n";
+        block += `\n💸 المصروفات (${expenseOps.length}):\n`;
         expenseOps.forEach((h, idx) => {
           const amtStr = formatUsd(h.amount);
           const accName = h.accountName || 'غير محدد';
           const opNum = (h.opNumber || h.note) ? `#${h.opNumber || h.note}` : 'بدون بيان';
           const timeInfo = h.timeStr ? ` (${h.timeStr})` : '';
-          reportText += `${idx + 1}. المبلغ: ${amtStr} | خُصم من حساب: ${accName} | البيان: ${opNum} | التاريخ: ${selectedShiftDate}${timeInfo}\n`;
+          block += `   ${idx + 1}. ${amtStr} | من حساب: ${accName} | البيان: ${opNum} | ${selectedShiftDate}${timeInfo}\n`;
         });
       }
 
       if (transferOps.length > 0) {
-        reportText += "\n==================================================\n";
-        reportText += `🔄 رابعاً: عمليات النقل بين الحسابات (${transferOps.length} عمليات)\n`;
-        reportText += "==================================================\n";
+        block += `\n🔄 النقل بين الحسابات (${transferOps.length}):\n`;
         transferOps.forEach((h, idx) => {
           const amtStr = formatUsd(h.amount);
           const opNum = (h.opNumber || h.note) ? `#${h.opNumber || h.note}` : 'بدون رقم';
-          reportText += `${idx + 1}. المبلغ: ${amtStr} | من حساب: ${h.fromName} إلى حساب: ${h.toName} | رقم العملية: ${opNum} | التاريخ: ${selectedShiftDate}\n`;
+          block += `   ${idx + 1}. ${amtStr} | من ${h.fromName} إلى ${h.toName} | عملية: ${opNum}\n`;
         });
       }
 
-      return reportText;
+      return block;
     }
 
+    // تصدير اليوم المختار فقط
     document.getElementById('exportReportBtn').addEventListener('click', () => {
       const selectedDate = document.getElementById('exportDateInput').value;
       if (!selectedDate) {
@@ -1213,7 +1214,7 @@
         return;
       }
 
-      const reportText = generateShiftReportText(selectedDate);
+      const reportText = generateSingleShiftBlock(selectedDate);
       if (!reportText) {
         showToast(`لا توجد عمليات مسجلة في جرد يوم ${selectedDate}`);
         return;
@@ -1223,7 +1224,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `ShamCash_Shift_${selectedDate}.txt`;
+      a.download = `ShamCash_Day_${selectedDate}.txt`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -1232,10 +1233,50 @@
       showToast(`تم تصدير جرد يوم ${selectedDate} بنجاح ✓`);
     });
 
+    // تصدير جميع الأيام المسجلة (كل يوم بيومه في ملف واحد منظم)
+    document.getElementById('exportAllDaysBtn').addEventListener('click', () => {
+      const allHistory = (state.history || []).filter(h => !h.excludeFromTotal);
+      if (allHistory.length === 0) {
+        showToast('لا توجد عمليات مسجلة لتصديرها');
+        return;
+      }
+
+      const uniqueShiftDates = Array.from(new Set(allHistory.map(h => getItemShiftDate(h)))).sort().reverse();
+      const totals = computeFinalTotals();
+
+      let fullReport = "**************************************************\n";
+      fullReport += "      السجل الشامل للجرد اليومي (كل يوم بيومه)      \n";
+      fullReport += `      عدد أيام الجرد المسجلة: ${uniqueShiftDates.length} يوم      \n`;
+      fullReport += "**************************************************\n";
+      fullReport += `• إجمالي الإيداعات الكلي: ${formatUsd(totals.depUsd)}\n`;
+      fullReport += `• إجمالي السحوبات الكلي: ${formatUsd(totals.wdUsd)}\n`;
+      fullReport += `• إجمالي المصروفات الكلي: ${formatUsd(totals.expUsd)}\n`;
+      fullReport += "**************************************************\n\n";
+
+      uniqueShiftDates.forEach(sDate => {
+        const block = generateSingleShiftBlock(sDate);
+        if (block) {
+          fullReport += block + "\n\n";
+        }
+      });
+
+      const blob = new Blob([fullReport], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ShamCash_All_Days_${new Date().toLocaleDateString('en-CA')}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      showToast(`تم تصدير جرد ${uniqueShiftDates.length} أيام (كل يوم بيومه) ✓`);
+    });
+
     document.getElementById('copyReportBtn').addEventListener('click', () => {
       const selectedDate = document.getElementById('exportDateInput').value;
       if (!selectedDate) return;
-      const reportText = generateShiftReportText(selectedDate);
+      const reportText = generateSingleShiftBlock(selectedDate);
       if (!reportText) {
         showToast(`لا توجد عمليات مسجلة في جرد يوم ${selectedDate}`);
         return;
@@ -1243,6 +1284,82 @@
       navigator.clipboard.writeText(reportText).then(() => {
         showToast(`تم نسخ تقرير جرد ${selectedDate} للحافظة ✓`);
       });
+    });
+
+    // 1. حفظ نسخة احتياطية كاملة (JSON) على الجهاز
+    document.getElementById('downloadBackupJsonBtn').addEventListener('click', () => {
+      const backupPayload = {
+        exportedAt: new Date().toISOString(),
+        app: 'ShamCash_Ledger_USD',
+        state: state
+      };
+      const blob = new Blob([JSON.stringify(backupPayload, null, 2)], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ShamCash_Backup_${new Date().toLocaleDateString('en-CA')}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('تم تحميل ملف النسخة الاحتياطية (.json) ✓');
+    });
+
+    // 2. حمل ودمج السجلات القديمة من ملف JSON
+    document.getElementById('triggerImportJsonBtn').addEventListener('click', () => {
+      document.getElementById('importJsonFileInput').click();
+    });
+
+    document.getElementById('importJsonFileInput').addEventListener('change', e => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          const parsed = JSON.parse(ev.target.result);
+          const importedState = parsed.state ? parsed.state : parsed;
+
+          if (!importedState || !Array.isArray(importedState.history)) {
+            showToast('⚠️ الملف المختار لا يحتوي على سجلات صالحة');
+            return;
+          }
+
+          const importedOps = importedState.history;
+          const existingIds = new Set((state.history || []).map(h => h.id));
+          let addedCount = 0;
+
+          // إزالة المعرفات المستوردة من قائمة المحذوفات إن وجدت
+          const importedIdsSet = new Set(importedOps.map(op => op.id));
+          state.deletedIds = (state.deletedIds || []).filter(id => !importedIdsSet.has(id));
+
+          importedOps.forEach(op => {
+            if (op && op.id && !existingIds.has(op.id)) {
+              state.history.push(op);
+              addedCount++;
+            }
+          });
+
+          // ترتيب السجل من الأحدث للأقدم
+          state.history.sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
+
+          // إذا كان السجل الحالي فارغاً والملف المستورد فيه حسابات وأرصدة ابتدائية، نستوردها أيضاً
+          if (existingIds.size === 0 && Array.isArray(importedState.accounts) && importedState.accounts.length > 0) {
+            state.accounts = importedState.accounts;
+            state.initialDepositUsd = Number(importedState.initialDepositUsd) || 0;
+            state.initialWithdrawUsd = Number(importedState.initialWithdrawUsd) || 0;
+            state.initialExpenseUsd = Number(importedState.initialExpenseUsd) || 0;
+          }
+
+          saveState(true);
+          renderAll();
+          showToast(`تم حمل ودمج ${addedCount} عملية قديمة ومزامنتها ✓`);
+        } catch (err) {
+          showToast('⚠️ تعذر قراءة الملف، تأكد أنه بصيغة JSON صحيحة');
+        }
+        e.target.value = '';
+      };
+      reader.readAsText(file);
     });
 
     renderAll();
