@@ -39,12 +39,9 @@
 
     <!-- شريط العنوان وحالة المزامنة الفورية -->
     <div class="flex items-center justify-between gap-2 flex-wrap">
-      <div>
-        <div class="flex items-center gap-2">
-          <h1 class="text-base font-extrabold text-white">لوحة الأرصدة والحسابات ($)</h1>
-          <span id="syncStatusBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">⏳ جاري الاتصال...</span>
-        </div>
-        <span id="currentShiftIndicator" class="text-[10px] font-bold text-sky-400 block mt-0.5">🕒 دورة الجرد: من 3:00 ظهراً إلى 3:00 ظهراً</span>
+      <div class="flex items-center gap-2">
+        <h1 class="text-base font-extrabold text-white">لوحة الأرصدة والحسابات ($)</h1>
+        <span id="syncStatusBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">⏳ جاري الاتصال...</span>
       </div>
       <div class="flex items-center gap-1.5 flex-wrap">
         <button id="manualSyncBtn" type="button" class="px-2.5 py-1.5 rounded-xl bg-sky-600/20 hover:bg-sky-500/30 border border-sky-500/40 text-[11px] font-bold text-sky-300 flex items-center gap-1 transition" title="تحديث البيانات مع السحابة الآن">
@@ -175,19 +172,17 @@
       </div>
 
       <form id="operationForm" class="p-4 space-y-3">
-        <div class="bg-slate-950/90 border border-sky-500/30 rounded-xl p-2.5 space-y-2">
-          <div class="flex items-center justify-between gap-2 flex-wrap">
-            <label for="opDate" class="text-xs font-bold text-sky-300 flex items-center gap-1.5">
-              <span>📅</span>
-              <span>يوم الجرد (3 ظهراً ← 3 ظهراً):</span>
-            </label>
-            <div class="flex items-center gap-1.5">
-              <input id="opDate" type="date" class="rounded-lg bg-slate-900 border border-slate-700 text-xs font-bold text-white px-2.5 py-1 num-font focus:border-sky-500 focus:outline-none" />
-              <input id="opTime" type="time" class="rounded-lg bg-slate-900 border border-slate-700 text-xs font-bold text-emerald-300 px-2 py-1 num-font focus:border-sky-500 focus:outline-none" />
-              <button id="setNowShiftBtn" type="button" class="text-[10px] font-bold bg-sky-600/30 hover:bg-sky-600/50 text-sky-200 px-2 py-1 rounded-lg transition">الآن</button>
-            </div>
+        <!-- اختيار التاريخ والوقت العادي -->
+        <div class="bg-slate-950/90 border border-sky-500/30 rounded-xl p-2.5 flex items-center justify-between gap-2 flex-wrap">
+          <label for="opDate" class="text-xs font-bold text-sky-300 flex items-center gap-1.5">
+            <span>📅</span>
+            <span>تاريخ العملية:</span>
+          </label>
+          <div class="flex items-center gap-1.5">
+            <input id="opDate" type="date" class="rounded-lg bg-slate-900 border border-slate-700 text-xs font-bold text-white px-2.5 py-1 num-font focus:border-sky-500 focus:outline-none" />
+            <input id="opTime" type="time" class="rounded-lg bg-slate-900 border border-slate-700 text-xs font-bold text-emerald-300 px-2 py-1 num-font focus:border-sky-500 focus:outline-none" />
+            <button id="setTodayBtn" type="button" class="text-[10px] font-bold bg-sky-600/30 hover:bg-sky-600/50 text-sky-200 px-2 py-1 rounded-lg transition">اليوم</button>
           </div>
-          <p id="shiftRangeHint" class="text-[10px] text-slate-400 font-semibold"></p>
         </div>
 
         <div>
@@ -229,7 +224,7 @@
       </form>
     </section>
 
-    <!-- 3. السجل التفاعلي + التصدير اليومي (يوم واحد أو كل يوم بيومه) + حمل سجلات قديمة -->
+    <!-- 3. السجل التفاعلي + التصدير اليومي + حمل سجلات قديمة -->
     <section class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-3 shadow-lg">
       
       <!-- قسم التصدير اليومي -->
@@ -252,7 +247,6 @@
             </button>
           </div>
         </div>
-        <div id="exportShiftPeriodLabel" class="text-[10px] text-amber-300 font-bold"></div>
 
         <!-- شريط حمل واسترجاع السجلات القديمة والنسخ الاحتياطي -->
         <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between flex-wrap gap-2">
@@ -327,27 +321,8 @@
     let searchQuery = '';
     let hasPulledFromCloudOnce = false;
 
-    function getShiftDateForDateObj(d) {
-      const copy = new Date(d.getTime());
-      if (copy.getHours() >= 15) {
-        copy.setDate(copy.getDate() + 1);
-      }
-      return copy.toLocaleDateString('en-CA');
-    }
-
-    function getShiftWindowText(shiftDateStr) {
-      if (!shiftDateStr) return '';
-      const parts = shiftDateStr.split('-').map(Number);
-      const endObj = new Date(parts[0], parts[1] - 1, parts[2]);
-      const startObj = new Date(endObj.getTime());
-      startObj.setDate(startObj.getDate() - 1);
-      const startStr = startObj.toLocaleDateString('en-CA');
-      return `من ${startStr} (3:00 ظهراً) ⬅️ إلى ${shiftDateStr} (3:00 ظهراً)`;
-    }
-
-    function getItemShiftDate(h) {
-      if (h.shiftDate) return h.shiftDate;
-      return h.date || new Date().toLocaleDateString('en-CA');
+    function getItemDate(h) {
+      return h.date || h.shiftDate || new Date().toLocaleDateString('en-CA');
     }
 
     function loadState() {
@@ -577,23 +552,7 @@
       };
     }
 
-    function updateShiftLabels() {
-      const activeShift = getShiftDateForDateObj(new Date());
-      document.getElementById('currentShiftIndicator').textContent = `🕒 جرد الآن يتبع ليوم (${activeShift}): ${getShiftWindowText(activeShift)}`;
-
-      const opDateVal = document.getElementById('opDate').value;
-      if (opDateVal) {
-        document.getElementById('shiftRangeHint').textContent = `📌 ستُسجل العملية في جرد يوم (${opDateVal}) الممتد: ${getShiftWindowText(opDateVal)}`;
-      }
-
-      const expDateVal = document.getElementById('exportDateInput').value;
-      if (expDateVal) {
-        document.getElementById('exportShiftPeriodLabel').textContent = `⏳ فترة الجرد المختارة: ${getShiftWindowText(expDateVal)}`;
-      }
-    }
-
     function renderAll() {
-      updateShiftLabels();
       renderTopAndActiveAccounts();
       renderAccountSelects();
       renderHistory();
@@ -815,10 +774,10 @@
         if (selectedHistoryType !== 'ALL' && h.type !== selectedHistoryType) return false;
         if (!q) return true;
 
-        const sDate = getItemShiftDate(h);
+        const dStr = getItemDate(h);
         const opNumMatch = String(h.opNumber || h.note || '').toLowerCase().includes(q);
         const amountMatch = String(h.amount || '').toLowerCase().includes(q);
-        const dateMatch = String(sDate).toLowerCase().includes(q);
+        const dateMatch = String(dStr).toLowerCase().includes(q);
         const accMatch = String(h.accountName || '').toLowerCase().includes(q);
         return opNumMatch || amountMatch || dateMatch || accMatch;
       });
@@ -830,24 +789,24 @@
         return;
       }
 
-      const shiftsMap = {};
+      const daysMap = {};
       filteredItems.forEach(h => {
-        const shiftDay = getItemShiftDate(h);
-        if (!shiftsMap[shiftDay]) shiftsMap[shiftDay] = [];
-        shiftsMap[shiftDay].push(h);
+        const dayStr = getItemDate(h);
+        if (!daysMap[dayStr]) daysMap[dayStr] = [];
+        daysMap[dayStr].push(h);
       });
 
-      const sortedShifts = Object.keys(shiftsMap).sort().reverse();
+      const sortedDays = Object.keys(daysMap).sort().reverse();
 
-      sortedShifts.forEach(shiftDay => {
-        const dayItems = shiftsMap[shiftDay];
-        let shiftDep = 0, shiftWd = 0, shiftExp = 0;
+      sortedDays.forEach(day => {
+        const dayItems = daysMap[day];
+        let dayDep = 0, dayWd = 0, dayExp = 0;
         dayItems.forEach(op => {
           if (op.excludeFromTotal) return;
           const amt = Number(op.amount) || 0;
-          if (op.type === 'deposit') shiftDep += amt;
-          else if (op.type === 'withdraw') shiftWd += amt;
-          else if (op.type === 'expense') shiftExp += amt;
+          if (op.type === 'deposit') dayDep += amt;
+          else if (op.type === 'withdraw') dayWd += amt;
+          else if (op.type === 'expense') dayExp += amt;
         });
 
         const dayBox = document.createElement('div');
@@ -856,14 +815,13 @@
         let dayHtml = `
           <div class="border-b border-slate-800 pb-2 space-y-1">
             <div class="flex items-center justify-between text-xs font-extrabold text-sky-400">
-              <span>📅 جرد يوم: ${shiftDay}</span>
+              <span>📅 يوم: ${day}</span>
               <span class="text-[10px] bg-slate-900 px-2 py-0.5 rounded text-slate-300">${dayItems.length} عمليات</span>
             </div>
-            <div class="text-[10px] text-slate-400 font-semibold">${getShiftWindowText(shiftDay)}</div>
             <div class="flex items-center gap-3 pt-1 text-[11px] font-bold flex-wrap">
-              <span class="text-emerald-400">➕ إيداعات الجرد: <strong class="num-font">${formatUsd(shiftDep)}</strong></span>
-              <span class="text-rose-400">➖ سحوبات الجرد: <strong class="num-font">${formatUsd(shiftWd)}</strong></span>
-              ${shiftExp > 0 ? `<span class="text-amber-400">💸 مصروفات: <strong class="num-font">${formatUsd(shiftExp)}</strong></span>` : ''}
+              <span class="text-emerald-400">➕ إيداعات اليوم: <strong class="num-font">${formatUsd(dayDep)}</strong></span>
+              <span class="text-rose-400">➖ سحوبات اليوم: <strong class="num-font">${formatUsd(dayWd)}</strong></span>
+              ${dayExp > 0 ? `<span class="text-amber-400">💸 مصروفات: <strong class="num-font">${formatUsd(dayExp)}</strong></span>` : ''}
             </div>
           </div>
           <div class="space-y-1.5">
@@ -871,7 +829,7 @@
 
         dayItems.forEach(h => {
           const amountStr = formatUsd(h.amount);
-          const itemDate = h.date || shiftDay;
+          const itemDate = getItemDate(h);
           const timeLabel = h.timeStr ? ` 🕒 ${h.timeStr}` : '';
           let badge = '', desc = '';
           const targetAccName = escapeHtml(h.accountName || '');
@@ -995,35 +953,31 @@
     const opDateInput = document.getElementById('opDate');
     const opTimeInput = document.getElementById('opTime');
 
-    function setInputsToCurrentShift() {
+    function setInputsToToday() {
       const now = new Date();
-      const shiftDateStr = getShiftDateForDateObj(now);
-      opDateInput.value = shiftDateStr;
+      const todayStr = now.toLocaleDateString('en-CA');
+      opDateInput.value = todayStr;
       opTimeInput.value = now.toTimeString().slice(0, 5);
-      document.getElementById('exportDateInput').value = shiftDateStr;
-      updateShiftLabels();
+      document.getElementById('exportDateInput').value = todayStr;
     }
 
-    setInputsToCurrentShift();
+    setInputsToToday();
 
-    document.getElementById('setNowShiftBtn').addEventListener('click', () => {
-      setInputsToCurrentShift();
-      showToast('تم ضبط التاريخ والوقت على دورة الجرد الحالية');
+    document.getElementById('setTodayBtn').addEventListener('click', () => {
+      setInputsToToday();
+      showToast('تم ضبط التاريخ على اليوم');
     });
 
     opDateInput.addEventListener('change', () => {
       if (opDateInput.value) {
         document.getElementById('exportDateInput').value = opDateInput.value;
-        updateShiftLabels();
       }
     });
-
-    document.getElementById('exportDateInput').addEventListener('change', updateShiftLabels);
 
     document.getElementById('operationForm').addEventListener('submit', e => {
       e.preventDefault();
       const amount = parseFloat(document.getElementById('opAmount').value);
-      const selectedShiftDate = opDateInput.value || getShiftDateForDateObj(new Date());
+      const selectedDate = opDateInput.value || new Date().toLocaleDateString('en-CA');
       const timeVal = opTimeInput.value || new Date().toTimeString().slice(0, 5);
       const opNumber = document.getElementById('opOpNumber').value.trim().replace(/^#+/, '');
       const excludeFromTotal = document.getElementById('excludeFromTotalCheckbox').checked;
@@ -1042,8 +996,7 @@
         state.history.unshift({
           id: 'h_' + realNow + '_' + Math.floor(Math.random() * 1000),
           createdAt: realNow,
-          date: selectedShiftDate,
-          shiftDate: selectedShiftDate,
+          date: selectedDate,
           timeStr: timeVal,
           type: currentMode,
           excludeFromTotal: currentMode === 'expense' ? false : excludeFromTotal,
@@ -1054,7 +1007,7 @@
           accountName: acc.name
         });
 
-        showToast(`تم الحفظ والمزامنة في جرد ${selectedShiftDate} ✓`);
+        showToast(`تم الحفظ والمزامنة بتاريخ ${selectedDate} ✓`);
       } else if (currentMode === 'transfer') {
         const fromId = document.getElementById('fromAccount').value;
         const toId = document.getElementById('toAccount').value;
@@ -1073,8 +1026,7 @@
         state.history.unshift({
           id: 'h_' + realNow + '_' + Math.floor(Math.random() * 1000),
           createdAt: realNow,
-          date: selectedShiftDate,
-          shiftDate: selectedShiftDate,
+          date: selectedDate,
           timeStr: timeVal,
           type: 'transfer',
           amount,
@@ -1085,7 +1037,7 @@
           toId: toAcc.id,
           toName: toAcc.name
         });
-        showToast(`تم النقل والمزامنة في جرد ${selectedShiftDate} ✓`);
+        showToast(`تم النقل والمزامنة بتاريخ ${selectedDate} ✓`);
       }
 
       saveState();
@@ -1124,12 +1076,11 @@
       showToast('تم حذف العملية ومزامنة التعديل ✓');
     });
 
-    // توليد نص تقرير ليوم جرد محدد (مع خيار تضمين أو إخفاء الترويسة العامة)
-    function generateSingleShiftBlock(selectedShiftDate) {
+    function generateSingleDayBlock(selectedDate) {
       const allHistory = state.history || [];
       const dayOps = allHistory.filter(h => {
         if (h.excludeFromTotal) return false;
-        return getItemShiftDate(h) === selectedShiftDate;
+        return getItemDate(h) === selectedDate;
       }).reverse();
 
       if (dayOps.length === 0) return null;
@@ -1145,8 +1096,7 @@
       expenseOps.forEach(op => { dayExpUsd += Number(op.amount) || 0; });
 
       let block = "==================================================\n";
-      block += `         📅 جرد يوم: ${selectedShiftDate}         \n`;
-      block += `   (${getShiftWindowText(selectedShiftDate)})   \n`;
+      block += `         📅 تقرير يوم: ${selectedDate}         \n`;
       block += "==================================================\n";
 
       block += `• عدد الإيداعات: ${depositOps.length} | مجموع الإيداعات: ${formatUsd(dayDepUsd)}\n`;
@@ -1166,7 +1116,7 @@
           const accName = h.accountName || 'غير محدد';
           const opNum = (h.opNumber || h.note) ? `#${h.opNumber || h.note}` : 'بدون رقم';
           const timeInfo = h.timeStr ? ` (${h.timeStr})` : '';
-          block += `   ${idx + 1}. ${amtStr} | حساب: ${accName} | عملية: ${opNum} | ${selectedShiftDate}${timeInfo}\n`;
+          block += `   ${idx + 1}. ${amtStr} | حساب: ${accName} | عملية: ${opNum} | ${selectedDate}${timeInfo}\n`;
         });
       }
 
@@ -1179,7 +1129,7 @@
           const accName = h.accountName || 'غير محدد';
           const opNum = (h.opNumber || h.note) ? `#${h.opNumber || h.note}` : 'بدون رقم';
           const timeInfo = h.timeStr ? ` (${h.timeStr})` : '';
-          block += `   ${idx + 1}. ${amtStr} | حساب: ${accName} | عملية: ${opNum} | ${selectedShiftDate}${timeInfo}\n`;
+          block += `   ${idx + 1}. ${amtStr} | حساب: ${accName} | عملية: ${opNum} | ${selectedDate}${timeInfo}\n`;
         });
       }
 
@@ -1190,7 +1140,7 @@
           const accName = h.accountName || 'غير محدد';
           const opNum = (h.opNumber || h.note) ? `#${h.opNumber || h.note}` : 'بدون بيان';
           const timeInfo = h.timeStr ? ` (${h.timeStr})` : '';
-          block += `   ${idx + 1}. ${amtStr} | من حساب: ${accName} | البيان: ${opNum} | ${selectedShiftDate}${timeInfo}\n`;
+          block += `   ${idx + 1}. ${amtStr} | من حساب: ${accName} | البيان: ${opNum} | ${selectedDate}${timeInfo}\n`;
         });
       }
 
@@ -1206,17 +1156,16 @@
       return block;
     }
 
-    // تصدير اليوم المختار فقط
     document.getElementById('exportReportBtn').addEventListener('click', () => {
       const selectedDate = document.getElementById('exportDateInput').value;
       if (!selectedDate) {
-        showToast('الرجاء اختيار يوم الجرد أولاً');
+        showToast('الرجاء اختيار التاريخ أولاً');
         return;
       }
 
-      const reportText = generateSingleShiftBlock(selectedDate);
+      const reportText = generateSingleDayBlock(selectedDate);
       if (!reportText) {
-        showToast(`لا توجد عمليات مسجلة في جرد يوم ${selectedDate}`);
+        showToast(`لا توجد عمليات مسجلة في يوم ${selectedDate}`);
         return;
       }
 
@@ -1230,10 +1179,9 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      showToast(`تم تصدير جرد يوم ${selectedDate} بنجاح ✓`);
+      showToast(`تم تصدير تقرير يوم ${selectedDate} بنجاح ✓`);
     });
 
-    // تصدير جميع الأيام المسجلة (كل يوم بيومه في ملف واحد منظم)
     document.getElementById('exportAllDaysBtn').addEventListener('click', () => {
       const allHistory = (state.history || []).filter(h => !h.excludeFromTotal);
       if (allHistory.length === 0) {
@@ -1241,20 +1189,20 @@
         return;
       }
 
-      const uniqueShiftDates = Array.from(new Set(allHistory.map(h => getItemShiftDate(h)))).sort().reverse();
+      const uniqueDates = Array.from(new Set(allHistory.map(h => getItemDate(h)))).sort().reverse();
       const totals = computeFinalTotals();
 
       let fullReport = "**************************************************\n";
       fullReport += "      السجل الشامل للجرد اليومي (كل يوم بيومه)      \n";
-      fullReport += `      عدد أيام الجرد المسجلة: ${uniqueShiftDates.length} يوم      \n`;
+      fullReport += `      عدد الأيام المسجلة: ${uniqueDates.length} يوم      \n`;
       fullReport += "**************************************************\n";
       fullReport += `• إجمالي الإيداعات الكلي: ${formatUsd(totals.depUsd)}\n`;
       fullReport += `• إجمالي السحوبات الكلي: ${formatUsd(totals.wdUsd)}\n`;
       fullReport += `• إجمالي المصروفات الكلي: ${formatUsd(totals.expUsd)}\n`;
       fullReport += "**************************************************\n\n";
 
-      uniqueShiftDates.forEach(sDate => {
-        const block = generateSingleShiftBlock(sDate);
+      uniqueDates.forEach(dStr => {
+        const block = generateSingleDayBlock(dStr);
         if (block) {
           fullReport += block + "\n\n";
         }
@@ -1270,23 +1218,22 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      showToast(`تم تصدير جرد ${uniqueShiftDates.length} أيام (كل يوم بيومه) ✓`);
+      showToast(`تم تصدير جرد ${uniqueDates.length} أيام (كل يوم بيومه) ✓`);
     });
 
     document.getElementById('copyReportBtn').addEventListener('click', () => {
       const selectedDate = document.getElementById('exportDateInput').value;
       if (!selectedDate) return;
-      const reportText = generateSingleShiftBlock(selectedDate);
+      const reportText = generateSingleDayBlock(selectedDate);
       if (!reportText) {
-        showToast(`لا توجد عمليات مسجلة في جرد يوم ${selectedDate}`);
+        showToast(`لا توجد عمليات مسجلة في يوم ${selectedDate}`);
         return;
       }
       navigator.clipboard.writeText(reportText).then(() => {
-        showToast(`تم نسخ تقرير جرد ${selectedDate} للحافظة ✓`);
+        showToast(`تم نسخ تقرير يوم ${selectedDate} للحافظة ✓`);
       });
     });
 
-    // 1. حفظ نسخة احتياطية كاملة (JSON) على الجهاز
     document.getElementById('downloadBackupJsonBtn').addEventListener('click', () => {
       const backupPayload = {
         exportedAt: new Date().toISOString(),
@@ -1305,7 +1252,6 @@
       showToast('تم تحميل ملف النسخة الاحتياطية (.json) ✓');
     });
 
-    // 2. حمل ودمج السجلات القديمة من ملف JSON
     document.getElementById('triggerImportJsonBtn').addEventListener('click', () => {
       document.getElementById('importJsonFileInput').click();
     });
@@ -1329,7 +1275,6 @@
           const existingIds = new Set((state.history || []).map(h => h.id));
           let addedCount = 0;
 
-          // إزالة المعرفات المستوردة من قائمة المحذوفات إن وجدت
           const importedIdsSet = new Set(importedOps.map(op => op.id));
           state.deletedIds = (state.deletedIds || []).filter(id => !importedIdsSet.has(id));
 
@@ -1340,10 +1285,8 @@
             }
           });
 
-          // ترتيب السجل من الأحدث للأقدم
           state.history.sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
 
-          // إذا كان السجل الحالي فارغاً والملف المستورد فيه حسابات وأرصدة ابتدائية، نستوردها أيضاً
           if (existingIds.size === 0 && Array.isArray(importedState.accounts) && importedState.accounts.length > 0) {
             state.accounts = importedState.accounts;
             state.initialDepositUsd = Number(importedState.initialDepositUsd) || 0;
