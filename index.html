@@ -5,111 +5,127 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>لوحة الأرصدة والحسابات ($)</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Cairo', 'Inter', 'sans-serif'],
-            mono: ['Inter', 'monospace']
-          }
-        }
-      }
-    };
-  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@500;700&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Cairo', sans-serif;
-      background-color: #0f172a;
-      color: #f8fafc;
-    }
-    .num-font {
-      font-family: 'Inter', 'Cairo', sans-serif;
-      direction: ltr;
-      display: inline-block;
-    }
+    body { font-family: 'Cairo', sans-serif; background-color: #020617; color: #f8fafc; }
+    .num-font { font-family: 'Inter', 'Cairo', sans-serif; direction: ltr; display: inline-block; }
   </style>
 </head>
-<body class="min-h-screen bg-slate-950 text-slate-100 py-5 px-3">
+<body class="min-h-screen py-5 px-3">
 
   <div class="max-w-xl mx-auto space-y-4">
 
-    <!-- شريط العنوان وحالة المزامنة الفورية -->
+    <!-- شريط العنوان -->
     <div class="flex items-center justify-between gap-2 flex-wrap">
       <div class="flex items-center gap-2">
         <h1 class="text-base font-extrabold text-white">لوحة الأرصدة والحسابات ($)</h1>
         <span id="syncStatusBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">⏳ جاري الاتصال...</span>
       </div>
       <div class="flex items-center gap-1.5 flex-wrap">
-        <button id="manualSyncBtn" type="button" class="px-2.5 py-1.5 rounded-xl bg-sky-600/20 hover:bg-sky-500/30 border border-sky-500/40 text-[11px] font-bold text-sky-300 flex items-center gap-1 transition" title="تحديث البيانات مع السحابة الآن">
-          <span>🔄</span>
-          <span>مزامنة</span>
-        </button>
-        <button id="openInitModalBtn" type="button" class="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-[11px] font-bold text-amber-300 flex items-center gap-1 transition">
-          <span>🛠️</span>
-          <span>قيم ابتدائية</span>
-        </button>
-        <a href="settings.html" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1.5 transition">
-          <span>⚙️</span>
-          <span>الإعدادات</span>
-        </a>
+        <button id="manualSyncBtn" type="button" class="px-2.5 py-1.5 rounded-xl bg-sky-600/20 hover:bg-sky-500/30 border border-sky-500/40 text-[11px] font-bold text-sky-300 transition">🔄 مزامنة</button>
+        <button id="openInitModalBtn" type="button" class="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-[11px] font-bold text-amber-300 transition">🛠️ قيم ابتدائية</button>
+        <a href="settings.html" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 transition">⚙️ الإعدادات</a>
       </div>
     </div>
 
-    <!-- نافذة إدخال القيم الابتدائية (آمنة ولا تمسح السجل تلقائياً) -->
+    <!-- نافذة تعديل عملية -->
+    <section id="editOpModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3">
+      <div class="bg-slate-900 border-2 border-sky-500/50 rounded-2xl p-4 w-full max-w-md shadow-2xl space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+          <h2 class="text-xs font-extrabold text-sky-400">✏️ تعديل العملية</h2>
+          <button id="closeEditOpModalBtn" type="button" class="text-xs text-slate-400 hover:text-white font-bold px-2 py-0.5 rounded bg-slate-800">إغلاق ✕</button>
+        </div>
+        <form id="editOpForm" class="space-y-3">
+          <input id="editOpId" type="hidden" />
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label for="editOpDate" class="block text-[11px] font-bold text-slate-300 mb-1">📅 التاريخ</label>
+              <input id="editOpDate" type="date" required class="w-full rounded-xl bg-slate-950 border border-slate-700 px-2.5 py-2 text-xs font-bold text-white num-font" />
+            </div>
+            <div>
+              <label for="editOpTime" class="block text-[11px] font-bold text-slate-300 mb-1">🕒 الوقت</label>
+              <input id="editOpTime" type="time" class="w-full rounded-xl bg-slate-950 border border-slate-700 px-2.5 py-2 text-xs font-bold text-emerald-300 num-font" />
+            </div>
+          </div>
+          <div>
+            <label for="editOpAmount" class="block text-[11px] font-bold text-slate-300 mb-1">المبلغ بالدولار ($)</label>
+            <input id="editOpAmount" type="number" step="any" min="0.01" required class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-sm font-extrabold text-white num-font" />
+          </div>
+          <div>
+            <label for="editOpNumber" class="block text-[11px] font-bold text-slate-300 mb-1">رقم العملية / البيان</label>
+            <input id="editOpNumber" type="text" class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white num-font" />
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="submit" class="py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs transition">حفظ ومزامنة ✓</button>
+            <button id="cancelEditOpBtn" type="button" class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition">إلغاء</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- نافذة نقل يوم كامل -->
+    <section id="moveDayModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3">
+      <div class="bg-slate-900 border-2 border-amber-500/50 rounded-2xl p-4 w-full max-w-md shadow-2xl space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+          <h2 class="text-xs font-extrabold text-amber-400">📅 تغيير تاريخ يوم كامل</h2>
+          <button id="closeMoveDayModalBtn" type="button" class="text-xs text-slate-400 hover:text-white font-bold px-2 py-0.5 rounded bg-slate-800">إغلاق ✕</button>
+        </div>
+        <p id="moveDayInfoText" class="text-xs text-slate-300"></p>
+        <form id="moveDayForm" class="space-y-3">
+          <input id="moveDayOldDate" type="hidden" />
+          <div>
+            <label for="moveDayNewDate" class="block text-[11px] font-bold text-slate-300 mb-1">التاريخ الجديد الصحيح:</label>
+            <input id="moveDayNewDate" type="date" required class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-sm font-bold text-white num-font" />
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="submit" class="py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs transition">تعديل ومزامنة ✓</button>
+            <button id="cancelMoveDayBtn" type="button" class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition">إلغاء</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- نافذة القيم الابتدائية -->
     <section id="initModal" class="hidden bg-slate-900 border-2 border-amber-500/50 rounded-2xl p-4 shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2">
         <h2 class="text-xs font-extrabold text-amber-400">🛠️ ضبط القيم الابتدائية ($)</h2>
         <button id="closeInitModalBtn" type="button" class="text-xs text-slate-400 hover:text-white font-bold px-2 py-0.5 rounded bg-slate-800">إغلاق ✕</button>
       </div>
-
       <div class="space-y-2">
         <span class="text-[11px] font-bold text-sky-400 block">1. الرصيد الحالي في كل حساب ($):</span>
         <div id="initAccountsContainer" class="space-y-2"></div>
       </div>
-
       <div class="space-y-2 pt-2 border-t border-slate-800">
-        <span class="text-[11px] font-bold text-emerald-400 block">2. القيم الابتدائية للمجاميع العامة ($):</span>
-        
+        <span class="text-[11px] font-bold text-emerald-400 block">2. المجاميع الابتدائية ($):</span>
         <div class="grid grid-cols-3 gap-2 bg-slate-950/80 p-2.5 rounded-xl border border-slate-800">
           <div>
-            <label class="text-[10px] text-slate-400 block mb-0.5">الإيداعات الابتدائية ($)</label>
+            <label class="text-[10px] text-slate-400 block mb-0.5">الإيداعات ($)</label>
             <input id="initDepUsd" type="number" step="any" placeholder="0" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2 py-1.5 text-xs font-extrabold text-emerald-400 num-font" />
           </div>
           <div>
-            <label class="text-[10px] text-slate-400 block mb-0.5">السحوبات الابتدائية ($)</label>
+            <label class="text-[10px] text-slate-400 block mb-0.5">السحوبات ($)</label>
             <input id="initWdUsd" type="number" step="any" placeholder="0" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2 py-1.5 text-xs font-extrabold text-rose-400 num-font" />
           </div>
           <div>
-            <label class="text-[10px] text-slate-400 block mb-0.5">المصروفات الابتدائية ($)</label>
+            <label class="text-[10px] text-slate-400 block mb-0.5">المصروفات ($)</label>
             <input id="initExpUsd" type="number" step="any" placeholder="0" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2 py-1.5 text-xs font-extrabold text-amber-400 num-font" />
           </div>
         </div>
       </div>
-
       <div class="bg-rose-950/30 border border-rose-500/30 rounded-xl px-3 py-2">
         <label class="flex items-center gap-2 cursor-pointer select-none">
           <input id="clearHistoryOnInitCheckbox" type="checkbox" class="w-4 h-4 rounded accent-rose-500 cursor-pointer" />
           <span class="text-[11px] font-bold text-rose-300">🧹 مسح سجل العمليات السابقة أيضاً (اتركه فارغاً للحفاظ على سجلك)</span>
         </label>
       </div>
-
       <div class="grid grid-cols-2 gap-2">
-        <button id="saveInitValuesBtn" type="button" class="py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg transition">
-          حفظ ومزامنة مع السحابة ✓
-        </button>
-        <button id="zeroEverythingBtn" type="button" class="py-2.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/40 border border-rose-500/40 text-rose-300 font-bold text-xs transition">
-          تصفير شامل لـ ($0)
-        </button>
+        <button id="saveInitValuesBtn" type="button" class="py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition">حفظ ومزامنة ✓</button>
+        <button id="zeroEverythingBtn" type="button" class="py-2.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/40 border border-rose-500/40 text-rose-300 font-bold text-xs transition">تصفير شامل ($0)</button>
       </div>
     </section>
 
-    <!-- 1. لوحة الملخص المدمجة بالأعلى -->
+    <!-- 1. لوحة الملخص -->
     <section class="bg-gradient-to-br from-slate-900 to-slate-950 border border-emerald-500/40 rounded-2xl p-4 shadow-xl space-y-3">
-      
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <div>
           <span class="text-[11px] font-bold text-slate-400 block">إجمالي أرصدة الحسابات المفعلة ($)</span>
@@ -117,70 +133,44 @@
         </div>
         <span id="activeAccountsBadge" class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">0 حسابات</span>
       </div>
-
-      <div class="space-y-1.5 pt-1">
+      <div class="space-y-1.5">
         <div class="flex items-center justify-between text-[11px] text-slate-400 px-1">
           <span>أرصدة الحسابات ($)</span>
           <a href="settings.html" class="text-emerald-400 hover:underline">إدارة الحسابات</a>
         </div>
         <div id="activeAccountsList" class="grid grid-cols-1 gap-1.5"></div>
       </div>
-
       <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/80">
         <div class="bg-slate-950/70 border border-emerald-500/20 rounded-xl p-2.5">
-          <div class="flex items-center justify-between mb-0.5">
-            <span class="text-[10px] text-slate-400 font-bold">إجمالي الإيداعات</span>
-            <span class="text-[10px]">➕</span>
-          </div>
-          <span id="allTimeTotalDepositsUsd" class="text-sm sm:text-base font-extrabold text-emerald-400 num-font block">$0</span>
+          <span class="text-[10px] text-slate-400 font-bold block">➕ الإيداعات</span>
+          <span id="allTimeTotalDepositsUsd" class="text-sm sm:text-base font-extrabold text-emerald-400 num-font block mt-0.5">$0</span>
         </div>
-
         <div class="bg-slate-950/70 border border-rose-500/20 rounded-xl p-2.5">
-          <div class="flex items-center justify-between mb-0.5">
-            <span class="text-[10px] text-slate-400 font-bold">إجمالي السحوبات</span>
-            <span class="text-[10px]">➖</span>
-          </div>
-          <span id="allTimeTotalWithdrawsUsd" class="text-sm sm:text-base font-extrabold text-rose-400 num-font block">$0</span>
+          <span class="text-[10px] text-slate-400 font-bold block">➖ السحوبات</span>
+          <span id="allTimeTotalWithdrawsUsd" class="text-sm sm:text-base font-extrabold text-rose-400 num-font block mt-0.5">$0</span>
         </div>
-
         <div class="bg-slate-950/70 border border-amber-500/20 rounded-xl p-2.5">
-          <div class="flex items-center justify-between mb-0.5">
-            <span class="text-[10px] text-slate-400 font-bold">إجمالي المصروفات</span>
-            <span class="text-[10px]">💸</span>
-          </div>
-          <span id="allTimeTotalExpensesUsd" class="text-sm sm:text-base font-extrabold text-amber-400 num-font block">$0</span>
+          <span class="text-[10px] text-slate-400 font-bold block">💸 المصروفات</span>
+          <span id="allTimeTotalExpensesUsd" class="text-sm sm:text-base font-extrabold text-amber-400 num-font block mt-0.5">$0</span>
         </div>
       </div>
-
     </section>
 
     <!-- 2. خانة العمليات السريعة -->
     <section class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
       <div class="grid grid-cols-4 bg-slate-950/70 p-1 gap-1 border-b border-slate-800">
-        <button id="modeDepositBtn" type="button" class="py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition bg-emerald-600 text-white shadow">
-          ➕ إيداع
-        </button>
-        <button id="modeWithdrawBtn" type="button" class="py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800">
-          ➖ سحب
-        </button>
-        <button id="modeExpenseBtn" type="button" class="py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800">
-          💸 مصروفات
-        </button>
-        <button id="modeTransferBtn" type="button" class="py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800">
-          🔄 نقل
-        </button>
+        <button id="modeDepositBtn" type="button" class="py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition bg-emerald-600 text-white shadow">➕ إيداع</button>
+        <button id="modeWithdrawBtn" type="button" class="py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800">➖ سحب</button>
+        <button id="modeExpenseBtn" type="button" class="py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800">💸 مصروفات</button>
+        <button id="modeTransferBtn" type="button" class="py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800">🔄 نقل</button>
       </div>
 
       <form id="operationForm" class="p-4 space-y-3">
-        <!-- اختيار التاريخ والوقت العادي -->
         <div class="bg-slate-950/90 border border-sky-500/30 rounded-xl p-2.5 flex items-center justify-between gap-2 flex-wrap">
-          <label for="opDate" class="text-xs font-bold text-sky-300 flex items-center gap-1.5">
-            <span>📅</span>
-            <span>تاريخ العملية:</span>
-          </label>
+          <label for="opDate" class="text-xs font-bold text-sky-300">📅 تاريخ العملية:</label>
           <div class="flex items-center gap-1.5">
-            <input id="opDate" type="date" class="rounded-lg bg-slate-900 border border-slate-700 text-xs font-bold text-white px-2.5 py-1 num-font focus:border-sky-500 focus:outline-none" />
-            <input id="opTime" type="time" class="rounded-lg bg-slate-900 border border-slate-700 text-xs font-bold text-emerald-300 px-2 py-1 num-font focus:border-sky-500 focus:outline-none" />
+            <input id="opDate" type="date" class="rounded-lg bg-slate-900 border border-slate-700 text-xs font-bold text-white px-2.5 py-1 num-font" />
+            <input id="opTime" type="time" class="rounded-lg bg-slate-900 border border-slate-700 text-xs font-bold text-emerald-300 px-2 py-1 num-font" />
             <button id="setTodayBtn" type="button" class="text-[10px] font-bold bg-sky-600/30 hover:bg-sky-600/50 text-sky-200 px-2 py-1 rounded-lg transition">اليوم</button>
           </div>
         </div>
@@ -192,72 +182,47 @@
 
         <div id="singleAccountBox">
           <label id="singleAccountLabel" for="opAccount" class="block text-[11px] font-bold text-slate-300 mb-1">إيداع في حساب</label>
-          <select id="opAccount" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:outline-none px-3 py-2 text-xs font-semibold text-white"></select>
+          <select id="opAccount" class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-xs font-semibold text-white"></select>
         </div>
 
         <div id="transferAccountsBox" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div>
             <label for="fromAccount" class="block text-[11px] font-bold text-slate-300 mb-1">من حساب</label>
-            <select id="fromAccount" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-sky-500 focus:outline-none px-3 py-2 text-xs font-semibold text-white"></select>
+            <select id="fromAccount" class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-xs font-semibold text-white"></select>
           </div>
           <div>
             <label for="toAccount" class="block text-[11px] font-bold text-slate-300 mb-1">إلى حساب</label>
-            <select id="toAccount" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-sky-500 focus:outline-none px-3 py-2 text-xs font-semibold text-white"></select>
+            <select id="toAccount" class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-xs font-semibold text-white"></select>
           </div>
         </div>
 
         <div>
           <label id="opNumberLabel" for="opOpNumber" class="block text-[11px] font-bold text-slate-300 mb-1">رقم العملية / بيان (اختياري)</label>
-          <input id="opOpNumber" type="text" placeholder="مثال: 1024 أو سبب المصروف..." class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:outline-none px-3 py-2 text-xs text-white num-font" />
+          <input id="opOpNumber" type="text" placeholder="مثال: 1024 أو سبب المصروف..." class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white num-font" />
         </div>
 
-        <div id="excludeFromTotalBox" class="bg-slate-950/90 border border-slate-800 rounded-xl px-3 py-2">
-          <label class="flex items-center gap-2 cursor-pointer select-none">
-            <input id="excludeFromTotalCheckbox" type="checkbox" class="w-4 h-4 rounded accent-amber-500 cursor-pointer" />
-            <span class="text-[11px] font-bold text-slate-300">استثناء هذه الحركة من إجمالي الإيداعات/السحوبات العام</span>
-          </label>
-        </div>
-
-        <button id="submitOpBtn" type="submit" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition">
-          تأكيد الإيداع وتحديث الرصيد
-        </button>
+        <button id="submitOpBtn" type="submit" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition">تأكيد الإيداع وتحديث الرصيد</button>
       </form>
     </section>
 
-    <!-- 3. السجل التفاعلي + التصدير اليومي + حمل سجلات قديمة -->
+    <!-- 3. السجل والتصدير اليومي -->
     <section class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-3 shadow-lg">
-      
-      <!-- قسم التصدير اليومي -->
       <div class="bg-slate-950/90 border border-sky-500/30 rounded-xl p-2.5 space-y-2.5">
         <div class="flex items-center justify-between flex-wrap gap-2">
-          <div class="flex items-center gap-1.5">
-            <span class="text-xs">📥</span>
-            <span class="text-[11px] font-bold text-sky-300">تصدير الجرد اليومي:</span>
-          </div>
+          <span class="text-[11px] font-bold text-sky-300">📥 تصدير الجرد اليومي:</span>
           <div class="flex items-center gap-1.5 flex-wrap">
-            <input id="exportDateInput" type="date" class="rounded-lg bg-slate-900 border border-slate-700 text-xs font-bold text-white px-2.5 py-1 num-font focus:border-sky-500 focus:outline-none" />
-            <button id="exportReportBtn" type="button" class="px-2.5 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-[11px] font-extrabold text-white shadow transition" title="تحميل تقرير اليوم المحدد فقط">
-              تصدير اليوم المختار
-            </button>
-            <button id="exportAllDaysBtn" type="button" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-[11px] font-extrabold text-white shadow transition" title="تحميل تقرير مرتب لكل الأيام المسجلة كل يوم بيومه">
-              📚 تصدير كل يوم بيومه
-            </button>
-            <button id="copyReportBtn" type="button" class="px-2 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-[11px] font-extrabold text-white shadow transition" title="نسخ تقرير اليوم المختار">
-              📋 نسخ
-            </button>
+            <input id="exportDateInput" type="date" class="rounded-lg bg-slate-900 border border-slate-700 text-xs font-bold text-white px-2.5 py-1 num-font" />
+            <button id="exportReportBtn" type="button" class="px-2.5 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-[11px] font-extrabold text-white transition">تصدير اليوم</button>
+            <button id="exportAllDaysBtn" type="button" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-[11px] font-extrabold text-white transition">📚 كل يوم بيومه</button>
+            <button id="copyReportBtn" type="button" class="px-2 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-[11px] font-extrabold text-white transition">📋 نسخ</button>
           </div>
         </div>
 
-        <!-- شريط حمل واسترجاع السجلات القديمة والنسخ الاحتياطي -->
         <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between flex-wrap gap-2">
           <span class="text-[10px] font-bold text-slate-400">🗄️ النسخ الاحتياطي وحمل السجلات القديمة:</span>
           <div class="flex items-center gap-1.5">
-            <button id="downloadBackupJsonBtn" type="button" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[10px] font-bold text-emerald-300 transition">
-              💾 حفظ نسخة سجل (.json)
-            </button>
-            <button id="triggerImportJsonBtn" type="button" class="px-2.5 py-1 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/40 text-[10px] font-bold text-amber-300 transition">
-              📂 حمل سجلات قديمة
-            </button>
+            <button id="downloadBackupJsonBtn" type="button" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[10px] font-bold text-emerald-300 transition">💾 حفظ نسخة (.json)</button>
+            <button id="triggerImportJsonBtn" type="button" class="px-2.5 py-1 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/40 text-[10px] font-bold text-amber-300 transition">📂 حمل سجلات قديمة</button>
             <input id="importJsonFileInput" type="file" accept=".json,application/json" class="hidden" />
           </div>
         </div>
@@ -266,25 +231,15 @@
       <div id="accountTabsContainer" class="flex items-center gap-1.5 overflow-x-auto pb-1"></div>
 
       <div id="typeTabsContainer" class="grid grid-cols-4 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-        <button type="button" data-type-tab="ALL" class="py-1.5 px-1 rounded-lg text-[11px] font-extrabold bg-slate-800 text-white shadow transition">
-          📋 الكل (<span id="countAll">0</span>)
-        </button>
-        <button type="button" data-type-tab="deposit" class="py-1.5 px-1 rounded-lg text-[11px] font-bold text-emerald-400 hover:bg-slate-900 transition">
-          ➕ الإيداعات (<span id="countDep">0</span>)
-        </button>
-        <button type="button" data-type-tab="withdraw" class="py-1.5 px-1 rounded-lg text-[11px] font-bold text-rose-400 hover:bg-slate-900 transition">
-          ➖ السحب (<span id="countWd">0</span>)
-        </button>
-        <button type="button" data-type-tab="expense" class="py-1.5 px-1 rounded-lg text-[11px] font-bold text-amber-400 hover:bg-slate-900 transition">
-          💸 المصروفات (<span id="countExp">0</span>)
-        </button>
+        <button type="button" data-type-tab="ALL" class="py-1.5 px-1 rounded-lg text-[11px] font-extrabold bg-slate-800 text-white shadow">📋 الكل (<span id="countAll">0</span>)</button>
+        <button type="button" data-type-tab="deposit" class="py-1.5 px-1 rounded-lg text-[11px] font-bold text-emerald-400">➕ إيداع (<span id="countDep">0</span>)</button>
+        <button type="button" data-type-tab="withdraw" class="py-1.5 px-1 rounded-lg text-[11px] font-bold text-rose-400">➖ سحب (<span id="countWd">0</span>)</button>
+        <button type="button" data-type-tab="expense" class="py-1.5 px-1 rounded-lg text-[11px] font-bold text-amber-400">💸 مصروف (<span id="countExp">0</span>)</button>
       </div>
 
-      <div class="relative">
-        <input id="historySearchInput" type="text" placeholder="🔍 ابحث برقم العملية أو المبلغ أو التاريخ..." class="w-full rounded-xl bg-slate-950 border border-slate-800 focus:border-sky-500 focus:outline-none px-3 py-2 text-xs text-white" />
-      </div>
+      <input id="historySearchInput" type="text" placeholder="🔍 ابحث برقم العملية أو المبلغ أو التاريخ..." class="w-full rounded-xl bg-slate-950 border border-slate-800 focus:border-sky-500 focus:outline-none px-3 py-2 text-xs text-white" />
 
-      <div id="accountsHistoryContainer" class="space-y-3 max-h-[480px] overflow-y-auto"></div>
+      <div id="accountsHistoryContainer" class="space-y-3 max-h-[500px] overflow-y-auto"></div>
     </section>
 
   </div>
@@ -296,9 +251,22 @@
   <script>
     const HARDCODED_FIREBASE_URL = 'https://shamcashapp-46c89-default-rtdb.firebaseio.com';
     const HARDCODED_SECRET_KEY   = 'my_balances';
-
     const STORAGE_KEY = 'simple_balance_mediator_v2';
     const DB_CONFIG_KEY = 'simple_balance_db_config_v1';
+
+    function getLocalTodayStr() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function getLocalTimeStr() {
+      const d = new Date();
+      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    }
+
+    function getItemDate(h) {
+      return h.date || getLocalTodayStr();
+    }
 
     const defaultState = {
       accounts: [
@@ -320,10 +288,6 @@
     let selectedHistoryType = 'ALL';
     let searchQuery = '';
     let hasPulledFromCloudOnce = false;
-
-    function getItemDate(h) {
-      return h.date || h.shiftDate || new Date().toLocaleDateString('en-CA');
-    }
 
     function loadState() {
       try {
@@ -352,10 +316,7 @@
           if (parsed && parsed.dbUrl) return parsed;
         }
       } catch (e) {}
-      const cfg = {
-        dbUrl: HARDCODED_FIREBASE_URL,
-        secretKey: HARDCODED_SECRET_KEY
-      };
+      const cfg = { dbUrl: HARDCODED_FIREBASE_URL, secretKey: HARDCODED_SECRET_KEY };
       try { localStorage.setItem(DB_CONFIG_KEY, JSON.stringify(cfg)); } catch (e) {}
       return cfg;
     }
@@ -376,7 +337,7 @@
         badge.textContent = text || '☁️ متزامن';
       } else if (status === 'syncing') {
         badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-300 border border-sky-500/30';
-        badge.textContent = text || '🔄 جاري المزامنة...';
+        badge.textContent = text || '🔄 مزامنة...';
       } else {
         badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30';
         badge.textContent = text || '⚠️ غير متصل';
@@ -386,27 +347,17 @@
     async function pushStateToCloud(forceOverwrite = false) {
       const endpoint = getCloudEndpoint();
       if (!endpoint) return;
-
       setSyncBadge('syncing');
       try {
-        if (!forceOverwrite && !hasPulledFromCloudOnce) {
-          await pullStateFromCloud(false);
-        }
-
+        if (!forceOverwrite && !hasPulledFromCloudOnce) await pullStateFromCloud(false);
         state.updatedAt = Date.now();
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
-
         const res = await fetch(endpoint, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(state)
         });
-
-        if (res.ok) {
-          setSyncBadge('ok', '☁️ متزامن تلقائياً');
-        } else {
-          setSyncBadge('warn', '⚠️ خطأ مزامنة');
-        }
+        setSyncBadge(res.ok ? 'ok' : 'warn', res.ok ? '☁️ متزامن تلقائياً' : '⚠️ خطأ مزامنة');
       } catch (e) {
         setSyncBadge('warn', '⚠️ لا يوجد إنترنت');
       }
@@ -415,24 +366,16 @@
     async function pullStateFromCloud(showNotification = false) {
       const endpoint = getCloudEndpoint();
       if (!endpoint) return;
-
       setSyncBadge('syncing');
       try {
         const res = await fetch(endpoint, { cache: 'no-store' });
-        if (!res.ok) {
-          setSyncBadge('warn', '⚠️ تعذر الاتصال');
-          return;
-        }
-
+        if (!res.ok) { setSyncBadge('warn', '⚠️ تعذر الاتصال'); return; }
         const cloudData = await res.json();
         hasPulledFromCloudOnce = true;
 
         if (!cloudData || !Array.isArray(cloudData.accounts)) {
-          if ((state.history && state.history.length > 0) || state.initialDepositUsd > 0) {
-            await pushStateToCloud(true);
-          } else {
-            setSyncBadge('ok', '☁️ متصل بالسحابة');
-          }
+          if ((state.history && state.history.length > 0) || state.initialDepositUsd > 0) await pushStateToCloud(true);
+          else setSyncBadge('ok', '☁️ متصل بالسحابة');
           return;
         }
 
@@ -442,21 +385,18 @@
         ]);
         state.deletedIds = Array.from(deletedSet).slice(-500);
 
-        const mergedHistoryMap = new Map();
+        const cloudIsNewer = (Number(cloudData.updatedAt) || 0) >= (Number(state.updatedAt) || 0);
+        const mergedMap = new Map();
         const cloudHist = Array.isArray(cloudData.history) ? cloudData.history : [];
         const localHist = Array.isArray(state.history) ? state.history : [];
 
-        [...cloudHist, ...localHist].forEach(item => {
-          if (item && item.id && !deletedSet.has(item.id)) {
-            mergedHistoryMap.set(item.id, item);
-          }
+        (cloudIsNewer ? [localHist, cloudHist] : [cloudHist, localHist]).forEach(list => {
+          list.forEach(item => {
+            if (item && item.id && !deletedSet.has(item.id)) mergedMap.set(item.id, item);
+          });
         });
 
-        const mergedHistory = Array.from(mergedHistoryMap.values()).sort((a, b) => {
-          return (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0);
-        });
-
-        const cloudIsNewer = (Number(cloudData.updatedAt) || 0) >= (Number(state.updatedAt) || 0);
+        state.history = Array.from(mergedMap.values()).sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
 
         if (cloudIsNewer) {
           state.accounts = cloudData.accounts;
@@ -465,8 +405,6 @@
           state.initialExpenseUsd = Number(cloudData.initialExpenseUsd) || 0;
           state.updatedAt = Number(cloudData.updatedAt) || Date.now();
         }
-
-        state.history = mergedHistory;
 
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
         renderAll();
@@ -483,21 +421,9 @@
       pushStateToCloud(forceOverwrite);
     }
 
-    setInterval(() => {
-      pullStateFromCloud(false);
-    }, 10000);
-
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        dbConfig = loadDbConfig();
-        pullStateFromCloud(false);
-      }
-    });
-
-    document.getElementById('manualSyncBtn').addEventListener('click', () => {
-      dbConfig = loadDbConfig();
-      pullStateFromCloud(true);
-    });
+    setInterval(() => pullStateFromCloud(false), 10000);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') pullStateFromCloud(false); });
+    document.getElementById('manualSyncBtn').addEventListener('click', () => pullStateFromCloud(true));
 
     function showToast(msg) {
       const box = document.getElementById('toastBox');
@@ -509,63 +435,67 @@
 
     function formatUsd(val) {
       const n = Number(val) || 0;
-      const sign = n < 0 ? '-' : '';
-      return sign + '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+      return (n < 0 ? '-' : '') + '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
     }
 
     function escapeHtml(str) {
-      return String(str || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    function getActiveAccounts() {
-      return state.accounts.filter(a => a.active);
-    }
+    function getActiveAccounts() { return state.accounts.filter(a => a.active); }
 
     function doesItemBelongToAccount(h, acc) {
       if (!h || !acc) return false;
-      const accNameTrim = String(acc.name || '').trim();
-      if (h.type === 'transfer') {
-        return h.fromId === acc.id || h.toId === acc.id || String(h.fromName || '').trim() === accNameTrim || String(h.toName || '').trim() === accNameTrim;
-      }
-      return h.accountId === acc.id || String(h.accountName || '').trim() === accNameTrim;
+      const n = String(acc.name || '').trim();
+      if (h.type === 'transfer') return h.fromId === acc.id || h.toId === acc.id || String(h.fromName || '').trim() === n || String(h.toName || '').trim() === n;
+      return h.accountId === acc.id || String(h.accountName || '').trim() === n;
+    }
+
+    function computeDailyClosingBalances() {
+      const activeAccs = getActiveAccounts();
+      let runningBalance = activeAccs.reduce((s, a) => s + (Number(a.usd) || 0), 0);
+
+      const allHistory = state.history || [];
+      const allDates = Array.from(new Set(allHistory.map(getItemDate))).sort().reverse();
+      const closingMap = {};
+
+      allDates.forEach(day => {
+        closingMap[day] = Number(runningBalance.toFixed(2));
+        allHistory.forEach(op => {
+          if (getItemDate(op) !== day) return;
+          const amt = Number(op.amount) || 0;
+          if (op.type === 'deposit') runningBalance -= amt;
+          else if (op.type === 'withdraw' || op.type === 'expense') runningBalance += amt;
+        });
+      });
+
+      return closingMap;
     }
 
     function computeFinalTotals() {
-      let histDepUsd = 0, histWdUsd = 0, histExpUsd = 0;
-
+      let dep = 0, wd = 0, exp = 0;
       (state.history || []).forEach(h => {
-        if (h.excludeFromTotal) return;
         const amt = Number(h.amount) || 0;
-        if (h.type === 'deposit') histDepUsd += amt;
-        else if (h.type === 'withdraw') histWdUsd += amt;
-        else if (h.type === 'expense') histExpUsd += amt;
+        if (h.type === 'deposit') dep += amt;
+        else if (h.type === 'withdraw') wd += amt;
+        else if (h.type === 'expense') exp += amt;
       });
-
       return {
-        depUsd: Number(((Number(state.initialDepositUsd) || 0) + histDepUsd).toFixed(2)),
-        wdUsd: Number(((Number(state.initialWithdrawUsd) || 0) + histWdUsd).toFixed(2)),
-        expUsd: Number(((Number(state.initialExpenseUsd) || 0) + histExpUsd).toFixed(2))
+        depUsd: Number(((Number(state.initialDepositUsd) || 0) + dep).toFixed(2)),
+        wdUsd: Number(((Number(state.initialWithdrawUsd) || 0) + wd).toFixed(2)),
+        expUsd: Number(((Number(state.initialExpenseUsd) || 0) + exp).toFixed(2))
       };
     }
 
     function renderAll() {
-      renderTopAndActiveAccounts();
-      renderAccountSelects();
+      renderTop();
+      renderSelects();
       renderHistory();
     }
 
-    function renderTopAndActiveAccounts() {
+    function renderTop() {
       const activeAccs = getActiveAccounts();
-      let totalUsd = 0;
-
-      activeAccs.forEach(a => {
-        totalUsd += Number(a.usd) || 0;
-      });
-
+      const totalUsd = activeAccs.reduce((s, a) => s + (Number(a.usd) || 0), 0);
       document.getElementById('totalUsdDisplay').textContent = formatUsd(totalUsd);
       document.getElementById('activeAccountsBadge').textContent = `${activeAccs.length} حسابات`;
 
@@ -575,731 +505,503 @@
       document.getElementById('allTimeTotalExpensesUsd').textContent = formatUsd(totals.expUsd);
 
       const list = document.getElementById('activeAccountsList');
-      list.innerHTML = '';
-
-      if (activeAccs.length === 0) {
-        list.innerHTML = `<div class="bg-slate-950/70 border border-dashed border-slate-800 rounded-xl p-2 text-center text-[11px] text-slate-400">لا توجد حسابات مفعلة.</div>`;
-        return;
-      }
-
-      activeAccs.forEach(acc => {
-        const row = document.createElement('div');
-        row.className = 'bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 flex items-center justify-between gap-2';
-        row.innerHTML = `
-          <div class="flex items-center gap-1.5">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-            <span class="text-xs font-bold text-white">${escapeHtml(acc.name)}</span>
-          </div>
+      list.innerHTML = activeAccs.length ? activeAccs.map(acc => `
+        <div class="bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 flex items-center justify-between gap-2">
+          <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span class="text-xs font-bold text-white">${escapeHtml(acc.name)}</span></div>
           <span class="text-sm font-extrabold text-emerald-400 num-font">${formatUsd(acc.usd)}</span>
-        `;
-        list.appendChild(row);
-      });
+        </div>
+      `).join('') : `<div class="bg-slate-950/70 border border-dashed border-slate-800 rounded-xl p-2 text-center text-[11px] text-slate-400">لا توجد حسابات مفعلة.</div>`;
     }
 
-    function openInitModal() {
-      const modal = document.getElementById('initModal');
-      const container = document.getElementById('initAccountsContainer');
-      container.innerHTML = '';
-
-      state.accounts.forEach(acc => {
-        const row = document.createElement('div');
-        row.className = 'bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between gap-3';
-        row.innerHTML = `
-          <div class="text-xs font-bold text-white">
-            <span>📁 ${escapeHtml(acc.name)}</span>
-          </div>
-          <div class="w-36">
-            <input type="number" step="any" data-init-acc-usd="${acc.id}" value="${Number(acc.usd) || 0}" placeholder="0 $" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1 text-xs font-extrabold text-emerald-400 num-font" />
-          </div>
-        `;
-        container.appendChild(row);
-      });
-
-      document.getElementById('initDepUsd').value = Number(state.initialDepositUsd) || 0;
-      document.getElementById('initWdUsd').value = Number(state.initialWithdrawUsd) || 0;
-      document.getElementById('initExpUsd').value = Number(state.initialExpenseUsd) || 0;
-      document.getElementById('clearHistoryOnInitCheckbox').checked = false;
-
-      modal.classList.remove('hidden');
-    }
-
-    document.getElementById('openInitModalBtn').addEventListener('click', openInitModal);
-    document.getElementById('closeInitModalBtn').addEventListener('click', () => {
-      document.getElementById('initModal').classList.add('hidden');
-    });
-
-    document.getElementById('saveInitValuesBtn').addEventListener('click', () => {
-      const shouldClearHistory = document.getElementById('clearHistoryOnInitCheckbox').checked;
-
-      state.accounts.forEach(acc => {
-        const usdIn = document.querySelector(`input[data-init-acc-usd="${acc.id}"]`);
-        if (usdIn) acc.usd = Number(parseFloat(usdIn.value || 0).toFixed(2));
-      });
-
-      state.initialDepositUsd = parseFloat(document.getElementById('initDepUsd').value) || 0;
-      state.initialWithdrawUsd = parseFloat(document.getElementById('initWdUsd').value) || 0;
-      state.initialExpenseUsd = parseFloat(document.getElementById('initExpUsd').value) || 0;
-
-      if (shouldClearHistory) {
-        (state.history || []).forEach(h => {
-          if (h && h.id) state.deletedIds.push(h.id);
-        });
-        state.history = [];
-      }
-
-      saveState(true);
-      renderAll();
-      document.getElementById('initModal').classList.add('hidden');
-      showToast('تم حفظ القيم ومزامنتها مع السحابة ✓');
-    });
-
-    document.getElementById('zeroEverythingBtn').addEventListener('click', () => {
-      if (!confirm('هل أنت متأكد من تصفير جميع الأرصدة والمجاميع ومسح السجل بالكامل إلى ($0) على جميع الأجهزة؟')) return;
-      state.accounts.forEach(acc => { acc.usd = 0; });
-      (state.history || []).forEach(h => {
-        if (h && h.id) state.deletedIds.push(h.id);
-      });
-      state.history = [];
-      state.initialDepositUsd = 0;
-      state.initialWithdrawUsd = 0;
-      state.initialExpenseUsd = 0;
-      saveState(true);
-      renderAll();
-      document.getElementById('initModal').classList.add('hidden');
-      showToast('تم تصفير كل شيء إلى ($0) تماماً ✓');
-    });
-
-    function renderAccountSelects() {
+    function renderSelects() {
       const activeAccs = getActiveAccounts();
-      const opSel = document.getElementById('opAccount');
-      const fromSel = document.getElementById('fromAccount');
-      const toSel = document.getElementById('toAccount');
-
-      const prevOp = opSel.value;
-      const prevFrom = fromSel.value;
-      const prevTo = toSel.value;
-
-      opSel.innerHTML = '';
-      fromSel.innerHTML = '';
-      toSel.innerHTML = '';
-
-      activeAccs.forEach(acc => {
-        const label = `${acc.name} (${formatUsd(acc.usd)})`;
-        const o1 = document.createElement('option'); o1.value = acc.id; o1.textContent = label; opSel.appendChild(o1);
-        const o2 = document.createElement('option'); o2.value = acc.id; o2.textContent = label; fromSel.appendChild(o2);
-        const o3 = document.createElement('option'); o3.value = acc.id; o3.textContent = label; toSel.appendChild(o3);
+      ['opAccount', 'fromAccount', 'toAccount'].forEach((id, idx) => {
+        const sel = document.getElementById(id);
+        const prev = sel.value;
+        sel.innerHTML = activeAccs.map(acc => `<option value="${acc.id}">${escapeHtml(acc.name)} (${formatUsd(acc.usd)})</option>`).join('');
+        if (prev && activeAccs.some(a => a.id === prev)) sel.value = prev;
+        else if (idx === 2 && activeAccs.length > 1) sel.value = activeAccs[1].id;
       });
-
-      if (prevOp && activeAccs.some(a => a.id === prevOp)) opSel.value = prevOp;
-      if (prevFrom && activeAccs.some(a => a.id === prevFrom)) fromSel.value = prevFrom;
-      if (prevTo && activeAccs.some(a => a.id === prevTo)) {
-        toSel.value = prevTo;
-      } else if (activeAccs.length > 1) {
-        toSel.value = activeAccs[1].id;
-      }
     }
 
     function renderHistory() {
-      const tabsContainer = document.getElementById('accountTabsContainer');
+      const tabs = document.getElementById('accountTabsContainer');
       const container = document.getElementById('accountsHistoryContainer');
-      tabsContainer.innerHTML = '';
-      container.innerHTML = '';
-
       const activeAccs = getActiveAccounts();
       const allHistory = state.history || [];
+      const closingBalancesMap = computeDailyClosingBalances();
 
-      if (!selectedHistoryAccId || (selectedHistoryAccId !== 'ALL' && !activeAccs.some(a => a.id === selectedHistoryAccId))) {
-        selectedHistoryAccId = 'ALL';
-      }
+      if (selectedHistoryAccId !== 'ALL' && !activeAccs.some(a => a.id === selectedHistoryAccId)) selectedHistoryAccId = 'ALL';
 
-      const isAllSelected = selectedHistoryAccId === 'ALL';
-      const allBtn = document.createElement('button');
-      allBtn.type = 'button';
-      allBtn.setAttribute('data-tab-acc-id', 'ALL');
-      allBtn.className = isAllSelected
-        ? 'px-3 py-1.5 rounded-xl text-xs font-extrabold bg-sky-600 text-white shadow flex items-center gap-1.5 whitespace-nowrap transition'
-        : 'px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-950 text-slate-400 hover:text-white border border-slate-800 flex items-center gap-1.5 whitespace-nowrap transition';
-      allBtn.innerHTML = `
-        <span>🌐 كل الحسابات</span>
-        <span class="text-[10px] px-1.5 py-0.5 rounded-full ${isAllSelected ? 'bg-sky-700 text-sky-100' : 'bg-slate-900 text-slate-400'}">${allHistory.length}</span>
+      tabs.innerHTML = `
+        <button type="button" data-tab-acc-id="ALL" class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${selectedHistoryAccId === 'ALL' ? 'bg-sky-600 text-white shadow' : 'bg-slate-950 text-slate-400 border border-slate-800'}">🌐 كل الحسابات (${allHistory.length})</button>
+        ${activeAccs.map(acc => {
+          const c = allHistory.filter(h => doesItemBelongToAccount(h, acc)).length;
+          return `<button type="button" data-tab-acc-id="${acc.id}" class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${selectedHistoryAccId === acc.id ? 'bg-sky-600 text-white shadow' : 'bg-slate-950 text-slate-400 border border-slate-800'}">📁 ${escapeHtml(acc.name)} (${c})</button>`;
+        }).join('')}
       `;
-      tabsContainer.appendChild(allBtn);
-
-      activeAccs.forEach(acc => {
-        const accCount = allHistory.filter(h => doesItemBelongToAccount(h, acc)).length;
-        const isSelected = acc.id === selectedHistoryAccId;
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.setAttribute('data-tab-acc-id', acc.id);
-        btn.className = isSelected
-          ? 'px-3 py-1.5 rounded-xl text-xs font-extrabold bg-sky-600 text-white shadow flex items-center gap-1.5 whitespace-nowrap transition'
-          : 'px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-950 text-slate-400 hover:text-white border border-slate-800 flex items-center gap-1.5 whitespace-nowrap transition';
-
-        btn.innerHTML = `
-          <span>📁 ${escapeHtml(acc.name)}</span>
-          <span class="text-[10px] px-1.5 py-0.5 rounded-full ${isSelected ? 'bg-sky-700 text-sky-100' : 'bg-slate-900 text-slate-400'}">${accCount}</span>
-        `;
-        tabsContainer.appendChild(btn);
-      });
 
       const currentAcc = selectedHistoryAccId === 'ALL' ? null : activeAccs.find(a => a.id === selectedHistoryAccId);
+      const scoped = allHistory.filter(h => selectedHistoryAccId === 'ALL' ? true : doesItemBelongToAccount(h, currentAcc));
 
-      const accScopedItems = allHistory.filter(h =>
-        selectedHistoryAccId === 'ALL' ? true : doesItemBelongToAccount(h, currentAcc)
-      );
-
-      document.getElementById('countAll').textContent = accScopedItems.length;
-      document.getElementById('countDep').textContent = accScopedItems.filter(h => h.type === 'deposit').length;
-      document.getElementById('countWd').textContent = accScopedItems.filter(h => h.type === 'withdraw').length;
-      document.getElementById('countExp').textContent = accScopedItems.filter(h => h.type === 'expense').length;
+      document.getElementById('countAll').textContent = scoped.length;
+      document.getElementById('countDep').textContent = scoped.filter(h => h.type === 'deposit').length;
+      document.getElementById('countWd').textContent = scoped.filter(h => h.type === 'withdraw').length;
+      document.getElementById('countExp').textContent = scoped.filter(h => h.type === 'expense').length;
 
       document.querySelectorAll('#typeTabsContainer button[data-type-tab]').forEach(btn => {
-        const tabType = btn.getAttribute('data-type-tab');
-        if (tabType === selectedHistoryType) {
-          btn.className = 'py-1.5 px-1 rounded-lg text-[11px] font-extrabold bg-slate-800 text-white shadow border border-slate-700 transition';
-        } else {
-          const colorMap = {
-            ALL: 'text-slate-300',
-            deposit: 'text-emerald-400',
-            withdraw: 'text-rose-400',
-            expense: 'text-amber-400'
-          };
-          btn.className = `py-1.5 px-1 rounded-lg text-[11px] font-bold ${colorMap[tabType] || 'text-slate-300'} hover:bg-slate-900 transition`;
-        }
+        const t = btn.getAttribute('data-type-tab');
+        const colors = { ALL: 'text-slate-300', deposit: 'text-emerald-400', withdraw: 'text-rose-400', expense: 'text-amber-400' };
+        btn.className = t === selectedHistoryType
+          ? 'py-1.5 px-1 rounded-lg text-[11px] font-extrabold bg-slate-800 text-white shadow border border-slate-700'
+          : `py-1.5 px-1 rounded-lg text-[11px] font-bold ${colors[t]} hover:bg-slate-900`;
       });
 
       const q = searchQuery.trim().toLowerCase();
-
-      const filteredItems = accScopedItems.filter(h => {
+      const filtered = scoped.filter(h => {
         if (selectedHistoryType !== 'ALL' && h.type !== selectedHistoryType) return false;
         if (!q) return true;
-
-        const dStr = getItemDate(h);
-        const opNumMatch = String(h.opNumber || h.note || '').toLowerCase().includes(q);
-        const amountMatch = String(h.amount || '').toLowerCase().includes(q);
-        const dateMatch = String(dStr).toLowerCase().includes(q);
-        const accMatch = String(h.accountName || '').toLowerCase().includes(q);
-        return opNumMatch || amountMatch || dateMatch || accMatch;
+        return String(h.opNumber || h.note || '').toLowerCase().includes(q)
+          || String(h.amount || '').toLowerCase().includes(q)
+          || getItemDate(h).includes(q)
+          || String(h.accountName || '').toLowerCase().includes(q);
       });
 
-      if (filteredItems.length === 0) {
-        container.innerHTML = `<div class="bg-slate-950/70 border border-slate-800 rounded-xl p-4 text-[11px] text-slate-400 text-center">
-          لا توجد عمليات مسجلة في هذا السجل حالياً
-        </div>`;
+      if (!filtered.length) {
+        container.innerHTML = `<div class="bg-slate-950/70 border border-slate-800 rounded-xl p-4 text-[11px] text-slate-400 text-center">لا توجد عمليات مسجلة حالياً</div>`;
         return;
       }
 
       const daysMap = {};
-      filteredItems.forEach(h => {
-        const dayStr = getItemDate(h);
-        if (!daysMap[dayStr]) daysMap[dayStr] = [];
-        daysMap[dayStr].push(h);
+      filtered.forEach(h => {
+        const d = getItemDate(h);
+        if (!daysMap[d]) daysMap[d] = [];
+        daysMap[d].push(h);
       });
 
-      const sortedDays = Object.keys(daysMap).sort().reverse();
-
-      sortedDays.forEach(day => {
-        const dayItems = daysMap[day];
-        let dayDep = 0, dayWd = 0, dayExp = 0;
-        dayItems.forEach(op => {
-          if (op.excludeFromTotal) return;
-          const amt = Number(op.amount) || 0;
-          if (op.type === 'deposit') dayDep += amt;
-          else if (op.type === 'withdraw') dayWd += amt;
-          else if (op.type === 'expense') dayExp += amt;
+      container.innerHTML = Object.keys(daysMap).sort().reverse().map(day => {
+        const items = daysMap[day];
+        let dDep = 0, dWd = 0, dExp = 0;
+        items.forEach(op => {
+          const a = Number(op.amount) || 0;
+          if (op.type === 'deposit') dDep += a;
+          else if (op.type === 'withdraw') dWd += a;
+          else if (op.type === 'expense') dExp += a;
         });
 
-        const dayBox = document.createElement('div');
-        dayBox.className = 'bg-slate-950/80 border border-slate-800 rounded-xl p-3 space-y-2';
+        const endOfDayBal = closingBalancesMap[day] !== undefined ? closingBalancesMap[day] : 0;
 
-        let dayHtml = `
-          <div class="border-b border-slate-800 pb-2 space-y-1">
-            <div class="flex items-center justify-between text-xs font-extrabold text-sky-400">
-              <span>📅 يوم: ${day}</span>
-              <span class="text-[10px] bg-slate-900 px-2 py-0.5 rounded text-slate-300">${dayItems.length} عمليات</span>
-            </div>
-            <div class="flex items-center gap-3 pt-1 text-[11px] font-bold flex-wrap">
-              <span class="text-emerald-400">➕ إيداعات اليوم: <strong class="num-font">${formatUsd(dayDep)}</strong></span>
-              <span class="text-rose-400">➖ سحوبات اليوم: <strong class="num-font">${formatUsd(dayWd)}</strong></span>
-              ${dayExp > 0 ? `<span class="text-amber-400">💸 مصروفات: <strong class="num-font">${formatUsd(dayExp)}</strong></span>` : ''}
-            </div>
-          </div>
-          <div class="space-y-1.5">
-        `;
-
-        dayItems.forEach(h => {
-          const amountStr = formatUsd(h.amount);
-          const itemDate = getItemDate(h);
-          const timeLabel = h.timeStr ? ` 🕒 ${h.timeStr}` : '';
+        const rowsHtml = items.map(h => {
           let badge = '', desc = '';
-          const targetAccName = escapeHtml(h.accountName || '');
-
-          if (h.type === 'deposit') {
-            badge = `<span class="text-emerald-400 font-bold">➕ إيداع</span>`;
-            desc = `حساب: ${targetAccName}`;
-          } else if (h.type === 'withdraw') {
-            badge = `<span class="text-rose-400 font-bold">➖ سحب</span>`;
-            desc = `حساب: ${targetAccName}`;
-          } else if (h.type === 'expense') {
-            badge = `<span class="text-amber-400 font-bold">💸 مصروف</span>`;
-            desc = `خصم من: ${targetAccName}`;
-          } else {
-            badge = `<span class="text-sky-400 font-bold">🔄 نقل</span>`;
-            desc = `من ${escapeHtml(h.fromName)} إلى ${escapeHtml(h.toName)}`;
-          }
-
-          if (h.excludeFromTotal) {
-            desc += ` • مستثنى من المجموع`;
-          }
-
-          const refValue = h.opNumber || h.note || '';
-          const opNumHtml = refValue ? `<span class="text-sky-300 font-semibold bg-sky-500/10 px-2 py-0.5 rounded text-[10px] num-font">🔢 #${escapeHtml(refValue)}</span>` : '';
-          const dateBadgeHtml = `<span class="text-slate-400 bg-slate-950 border border-slate-800 px-1.5 py-0.5 rounded text-[10px] num-font">📅 ${itemDate}${timeLabel}</span>`;
-
-          dayHtml += `
+          if (h.type === 'deposit') { badge = `<span class="text-emerald-400 font-bold">➕ إيداع</span>`; desc = `حساب: ${escapeHtml(h.accountName)}`; }
+          else if (h.type === 'withdraw') { badge = `<span class="text-rose-400 font-bold">➖ سحب</span>`; desc = `حساب: ${escapeHtml(h.accountName)}`; }
+          else if (h.type === 'expense') { badge = `<span class="text-amber-400 font-bold">💸 مصروف</span>`; desc = `من: ${escapeHtml(h.accountName)}`; }
+          else { badge = `<span class="text-sky-400 font-bold">🔄 نقل</span>`; desc = `${escapeHtml(h.fromName)} ← ${escapeHtml(h.toName)}`; }
+          const refVal = h.opNumber || h.note || '';
+          return `
             <div class="bg-slate-900 border border-slate-800/70 rounded-lg px-2.5 py-2 flex items-center justify-between text-xs gap-2">
               <div class="flex items-center gap-2 flex-wrap">
                 ${badge}
-                <span class="font-extrabold text-white num-font">${amountStr}</span>
+                <span class="font-extrabold text-white num-font">${formatUsd(h.amount)}</span>
                 <span class="text-slate-400 text-[11px]">(${desc})</span>
-                ${opNumHtml}
-                ${dateBadgeHtml}
+                ${refVal ? `<span class="text-sky-300 bg-sky-500/10 px-1.5 py-0.5 rounded text-[10px] num-font">#${escapeHtml(refVal)}</span>` : ''}
+                ${h.timeStr ? `<span class="text-slate-500 text-[10px] num-font">🕒 ${h.timeStr}</span>` : ''}
               </div>
-              <button type="button" data-undo-id="${h.id}" class="text-[10px] text-rose-400 hover:underline font-semibold whitespace-nowrap">حذف / تراجع</button>
+              <div class="flex items-center gap-2 whitespace-nowrap">
+                <button type="button" data-edit-id="${h.id}" class="text-[10px] text-sky-400 hover:underline font-semibold">✏️ تعديل</button>
+                <button type="button" data-undo-id="${h.id}" class="text-[10px] text-rose-400 hover:underline font-semibold">حذف</button>
+              </div>
             </div>
           `;
-        });
+        }).join('');
 
-        dayHtml += `</div>`;
-        dayBox.innerHTML = dayHtml;
-        container.appendChild(dayBox);
-      });
+        return `
+          <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3 space-y-2">
+            <div class="border-b border-slate-800 pb-2 space-y-1.5">
+              <div class="flex items-center justify-between gap-2 flex-wrap">
+                <span class="text-xs font-extrabold text-sky-400 num-font">📅 ${day}</span>
+                <div class="flex items-center gap-1.5">
+                  <button type="button" data-move-day="${day}" class="text-[10px] bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded font-bold transition">📅 تغيير تاريخ اليوم</button>
+                  <button type="button" data-quick-export-day="${day}" class="text-[10px] bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 px-2 py-0.5 rounded font-bold transition">📥 تصدير</button>
+                </div>
+              </div>
+              <div class="flex items-center gap-3 text-[11px] font-bold flex-wrap">
+                <span class="text-emerald-400">➕ إيداع: <strong class="num-font">${formatUsd(dDep)}</strong></span>
+                <span class="text-rose-400">➖ سحب: <strong class="num-font">${formatUsd(dWd)}</strong></span>
+                ${dExp > 0 ? `<span class="text-amber-400">💸 مصروف: <strong class="num-font">${formatUsd(dExp)}</strong></span>` : ''}
+              </div>
+              <div class="bg-emerald-500/10 border border-emerald-500/25 rounded-lg px-2.5 py-1 flex items-center justify-between text-[11px]">
+                <span class="font-bold text-emerald-300">💰 إجمالي الرصيد بنهاية اليوم:</span>
+                <span class="font-extrabold text-emerald-400 num-font text-xs">${formatUsd(endOfDayBal)}</span>
+              </div>
+            </div>
+            <div class="space-y-1.5">${rowsHtml}</div>
+          </div>
+        `;
+      }).join('');
     }
 
-    document.getElementById('accountTabsContainer').addEventListener('click', e => {
-      const btn = e.target.closest('button[data-tab-acc-id]');
-      if (!btn) return;
-      selectedHistoryAccId = btn.getAttribute('data-tab-acc-id');
-      renderHistory();
+    // القيم الابتدائية
+    document.getElementById('openInitModalBtn').addEventListener('click', () => {
+      document.getElementById('initAccountsContainer').innerHTML = state.accounts.map(acc => `
+        <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between gap-3">
+          <span class="text-xs font-bold text-white">📁 ${escapeHtml(acc.name)}</span>
+          <input type="number" step="any" data-init-acc-usd="${acc.id}" value="${Number(acc.usd) || 0}" class="w-32 rounded-lg bg-slate-900 border border-slate-700 px-2.5 py-1 text-xs font-extrabold text-emerald-400 num-font" />
+        </div>
+      `).join('');
+      document.getElementById('initDepUsd').value = state.initialDepositUsd || 0;
+      document.getElementById('initWdUsd').value = state.initialWithdrawUsd || 0;
+      document.getElementById('initExpUsd').value = state.initialExpenseUsd || 0;
+      document.getElementById('clearHistoryOnInitCheckbox').checked = false;
+      document.getElementById('initModal').classList.remove('hidden');
     });
 
-    document.getElementById('typeTabsContainer').addEventListener('click', e => {
-      const btn = e.target.closest('button[data-type-tab]');
-      if (!btn) return;
-      selectedHistoryType = btn.getAttribute('data-type-tab');
-      renderHistory();
+    document.getElementById('closeInitModalBtn').addEventListener('click', () => document.getElementById('initModal').classList.add('hidden'));
+
+    document.getElementById('saveInitValuesBtn').addEventListener('click', () => {
+      state.accounts.forEach(acc => {
+        const inp = document.querySelector(`input[data-init-acc-usd="${acc.id}"]`);
+        if (inp) acc.usd = Number((parseFloat(inp.value) || 0).toFixed(2));
+      });
+      state.initialDepositUsd = parseFloat(document.getElementById('initDepUsd').value) || 0;
+      state.initialWithdrawUsd = parseFloat(document.getElementById('initWdUsd').value) || 0;
+      state.initialExpenseUsd = parseFloat(document.getElementById('initExpUsd').value) || 0;
+      if (document.getElementById('clearHistoryOnInitCheckbox').checked) {
+        state.history.forEach(h => { if (h.id) state.deletedIds.push(h.id); });
+        state.history = [];
+      }
+      saveState(true); renderAll();
+      document.getElementById('initModal').classList.add('hidden');
+      showToast('تم حفظ القيم ومزامنتها ✓');
     });
 
-    document.getElementById('historySearchInput').addEventListener('input', e => {
-      searchQuery = e.target.value;
-      renderHistory();
+    document.getElementById('zeroEverythingBtn').addEventListener('click', () => {
+      if (!confirm('تصفير جميع الأرصدة والمجاميع ومسح السجل بالكامل إلى ($0)؟')) return;
+      state.accounts.forEach(acc => acc.usd = 0);
+      state.history.forEach(h => { if (h.id) state.deletedIds.push(h.id); });
+      state.history = [];
+      state.initialDepositUsd = state.initialWithdrawUsd = state.initialExpenseUsd = 0;
+      saveState(true); renderAll();
+      document.getElementById('initModal').classList.add('hidden');
+      showToast('تم التصفير الشامل ✓');
     });
 
+    // تبديل الأوضاع
     function setMode(mode) {
       currentMode = mode;
-      const depBtn = document.getElementById('modeDepositBtn');
-      const wdBtn = document.getElementById('modeWithdrawBtn');
-      const expBtn = document.getElementById('modeExpenseBtn');
-      const trBtn = document.getElementById('modeTransferBtn');
-      const singleBox = document.getElementById('singleAccountBox');
-      const transferBox = document.getElementById('transferAccountsBox');
-      const singleLabel = document.getElementById('singleAccountLabel');
-      const opNumLabel = document.getElementById('opNumberLabel');
-      const submitBtn = document.getElementById('submitOpBtn');
-      const excludeBox = document.getElementById('excludeFromTotalBox');
-
-      const baseClass = 'py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800';
-      depBtn.className = baseClass; wdBtn.className = baseClass; expBtn.className = baseClass; trBtn.className = baseClass;
-
-      if (mode === 'deposit') {
-        depBtn.className = 'py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition bg-emerald-600 text-white shadow';
-        singleBox.classList.remove('hidden'); transferBox.classList.add('hidden');
-        excludeBox.classList.remove('hidden');
-        singleLabel.textContent = 'إيداع في حساب';
-        opNumLabel.textContent = 'رقم العملية / رقم السند (اختياري)';
-        submitBtn.textContent = 'تأكيد الإيداع وتحديث الرصيد';
-        submitBtn.className = 'w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition';
-      } else if (mode === 'withdraw') {
-        wdBtn.className = 'py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition bg-rose-600 text-white shadow';
-        singleBox.classList.remove('hidden'); transferBox.classList.add('hidden');
-        excludeBox.classList.remove('hidden');
-        singleLabel.textContent = 'سحب من حساب';
-        opNumLabel.textContent = 'رقم العملية / رقم السند (اختياري)';
-        submitBtn.textContent = 'تأكيد السحب وتحديث الرصيد';
-        submitBtn.className = 'w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md transition';
-      } else if (mode === 'expense') {
-        expBtn.className = 'py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition bg-amber-600 text-white shadow';
-        singleBox.classList.remove('hidden'); transferBox.classList.add('hidden');
-        excludeBox.classList.add('hidden');
-        singleLabel.textContent = 'خصم المصروف من حساب';
-        opNumLabel.textContent = 'بيان المصروف / رقم العملية (اختياري)';
-        submitBtn.textContent = 'تأكيد المصروف وخصمه من الرصيد';
-        submitBtn.className = 'w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-md transition';
-      } else {
-        trBtn.className = 'py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition bg-sky-600 text-white shadow';
-        singleBox.classList.add('hidden'); transferBox.classList.remove('hidden');
-        excludeBox.classList.add('hidden');
-        opNumLabel.textContent = 'رقم العملية / ملاحظة (اختياري)';
-        submitBtn.textContent = 'تأكيد النقل بين الحسابين';
-        submitBtn.className = 'w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs shadow-md transition';
-      }
+      const btns = { deposit: 'modeDepositBtn', withdraw: 'modeWithdrawBtn', expense: 'modeExpenseBtn', transfer: 'modeTransferBtn' };
+      const styles = {
+        deposit: ['bg-emerald-600', 'إيداع في حساب', 'رقم العملية (اختياري)', 'تأكيد الإيداع وتحديث الرصيد'],
+        withdraw: ['bg-rose-600', 'سحب من حساب', 'رقم العملية (اختياري)', 'تأكيد السحب وتحديث الرصيد'],
+        expense: ['bg-amber-600', 'خصم المصروف من حساب', 'بيان المصروف (اختياري)', 'تأكيد المصروف وخصمه من الرصيد'],
+        transfer: ['bg-sky-600', '', 'رقم العملية / ملاحظة (اختياري)', 'تأكيد النقل بين الحسابين']
+      };
+      Object.keys(btns).forEach(k => {
+        document.getElementById(btns[k]).className = k === mode
+          ? `py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition ${styles[k][0]} text-white shadow`
+          : 'py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800';
+      });
+      document.getElementById('singleAccountBox').classList.toggle('hidden', mode === 'transfer');
+      document.getElementById('transferAccountsBox').classList.toggle('hidden', mode !== 'transfer');
+      if (styles[mode][1]) document.getElementById('singleAccountLabel').textContent = styles[mode][1];
+      document.getElementById('opNumberLabel').textContent = styles[mode][2];
+      const sub = document.getElementById('submitOpBtn');
+      sub.textContent = styles[mode][3];
+      sub.className = `w-full py-2.5 rounded-xl ${styles[mode][0]} hover:opacity-90 text-white font-bold text-xs shadow-md transition`;
     }
 
-    document.getElementById('modeDepositBtn').addEventListener('click', () => setMode('deposit'));
-    document.getElementById('modeWithdrawBtn').addEventListener('click', () => setMode('withdraw'));
-    document.getElementById('modeExpenseBtn').addEventListener('click', () => setMode('expense'));
-    document.getElementById('modeTransferBtn').addEventListener('click', () => setMode('transfer'));
+    ['deposit', 'withdraw', 'expense', 'transfer'].forEach(m => {
+      document.getElementById(`mode${m.charAt(0).toUpperCase() + m.slice(1)}Btn`).addEventListener('click', () => setMode(m));
+    });
 
     const opDateInput = document.getElementById('opDate');
     const opTimeInput = document.getElementById('opTime');
-
-    function setInputsToToday() {
-      const now = new Date();
-      const todayStr = now.toLocaleDateString('en-CA');
-      opDateInput.value = todayStr;
-      opTimeInput.value = now.toTimeString().slice(0, 5);
-      document.getElementById('exportDateInput').value = todayStr;
+    function resetTodayInputs() {
+      const t = getLocalTodayStr();
+      opDateInput.value = t;
+      opTimeInput.value = getLocalTimeStr();
+      document.getElementById('exportDateInput').value = t;
     }
+    resetTodayInputs();
 
-    setInputsToToday();
-
-    document.getElementById('setTodayBtn').addEventListener('click', () => {
-      setInputsToToday();
-      showToast('تم ضبط التاريخ على اليوم');
-    });
-
-    opDateInput.addEventListener('change', () => {
-      if (opDateInput.value) {
-        document.getElementById('exportDateInput').value = opDateInput.value;
-      }
-    });
+    document.getElementById('setTodayBtn').addEventListener('click', () => { resetTodayInputs(); showToast('تم الضبط على تاريخ اليوم'); });
+    opDateInput.addEventListener('change', () => { if (opDateInput.value) document.getElementById('exportDateInput').value = opDateInput.value; });
 
     document.getElementById('operationForm').addEventListener('submit', e => {
       e.preventDefault();
       const amount = parseFloat(document.getElementById('opAmount').value);
-      const selectedDate = opDateInput.value || new Date().toLocaleDateString('en-CA');
-      const timeVal = opTimeInput.value || new Date().toTimeString().slice(0, 5);
+      const selectedDate = opDateInput.value || getLocalTodayStr();
+      const timeVal = opTimeInput.value || getLocalTimeStr();
       const opNumber = document.getElementById('opOpNumber').value.trim().replace(/^#+/, '');
-      const excludeFromTotal = document.getElementById('excludeFromTotalCheckbox').checked;
       if (!amount || amount <= 0) return;
 
-      const realNow = Date.now();
-
-      if (currentMode === 'deposit' || currentMode === 'withdraw' || currentMode === 'expense') {
-        const accId = document.getElementById('opAccount').value;
-        const acc = state.accounts.find(a => a.id === accId);
-        if (!acc) return;
-
-        const delta = currentMode === 'deposit' ? amount : -amount;
-        acc.usd = Number((Number(acc.usd || 0) + delta).toFixed(2));
-
-        state.history.unshift({
-          id: 'h_' + realNow + '_' + Math.floor(Math.random() * 1000),
-          createdAt: realNow,
-          date: selectedDate,
-          timeStr: timeVal,
-          type: currentMode,
-          excludeFromTotal: currentMode === 'expense' ? false : excludeFromTotal,
-          amount,
-          currency: 'USD',
-          opNumber,
-          accountId: acc.id,
-          accountName: acc.name
-        });
-
-        showToast(`تم الحفظ والمزامنة بتاريخ ${selectedDate} ✓`);
-      } else if (currentMode === 'transfer') {
+      const now = Date.now();
+      if (currentMode === 'transfer') {
         const fromId = document.getElementById('fromAccount').value;
         const toId = document.getElementById('toAccount').value;
-        if (!fromId || !toId || fromId === toId) {
-          showToast('يرجى اختيار حسابين مختلفين للنقل بينهما');
-          return;
-        }
-
-        const fromAcc = state.accounts.find(a => a.id === fromId);
-        const toAcc = state.accounts.find(a => a.id === toId);
-        if (!fromAcc || !toAcc) return;
-
-        fromAcc.usd = Number((Number(fromAcc.usd || 0) - amount).toFixed(2));
-        toAcc.usd = Number((Number(toAcc.usd || 0) + amount).toFixed(2));
-
-        state.history.unshift({
-          id: 'h_' + realNow + '_' + Math.floor(Math.random() * 1000),
-          createdAt: realNow,
-          date: selectedDate,
-          timeStr: timeVal,
-          type: 'transfer',
-          amount,
-          currency: 'USD',
-          opNumber,
-          fromId: fromAcc.id,
-          fromName: fromAcc.name,
-          toId: toAcc.id,
-          toName: toAcc.name
-        });
-        showToast(`تم النقل والمزامنة بتاريخ ${selectedDate} ✓`);
+        if (!fromId || !toId || fromId === toId) { showToast('اختر حسابين مختلفين'); return; }
+        const fAcc = state.accounts.find(a => a.id === fromId);
+        const tAcc = state.accounts.find(a => a.id === toId);
+        if (!fAcc || !tAcc) return;
+        fAcc.usd = Number((Number(fAcc.usd || 0) - amount).toFixed(2));
+        tAcc.usd = Number((Number(tAcc.usd || 0) + amount).toFixed(2));
+        state.history.unshift({ id: `h_${now}_${Math.floor(Math.random()*1000)}`, createdAt: now, date: selectedDate, timeStr: timeVal, type: 'transfer', amount, currency: 'USD', opNumber, fromId: fAcc.id, fromName: fAcc.name, toId: tAcc.id, toName: tAcc.name });
+      } else {
+        const acc = state.accounts.find(a => a.id === document.getElementById('opAccount').value);
+        if (!acc) return;
+        const delta = currentMode === 'deposit' ? amount : -amount;
+        acc.usd = Number((Number(acc.usd || 0) + delta).toFixed(2));
+        state.history.unshift({ id: `h_${now}_${Math.floor(Math.random()*1000)}`, createdAt: now, date: selectedDate, timeStr: timeVal, type: currentMode, amount, currency: 'USD', opNumber, accountId: acc.id, accountName: acc.name });
       }
 
-      saveState();
-      renderAll();
+      saveState(); renderAll();
       document.getElementById('opAmount').value = '';
       document.getElementById('opOpNumber').value = '';
-      document.getElementById('excludeFromTotalCheckbox').checked = false;
-      opTimeInput.value = new Date().toTimeString().slice(0, 5);
+      opTimeInput.value = getLocalTimeStr();
+      showToast(`تم الحفظ بتاريخ ${selectedDate} ✓`);
     });
 
+    // أحداث السجل
+    document.getElementById('accountTabsContainer').addEventListener('click', e => {
+      const b = e.target.closest('button[data-tab-acc-id]');
+      if (b) { selectedHistoryAccId = b.getAttribute('data-tab-acc-id'); renderHistory(); }
+    });
+    document.getElementById('typeTabsContainer').addEventListener('click', e => {
+      const b = e.target.closest('button[data-type-tab]');
+      if (b) { selectedHistoryType = b.getAttribute('data-type-tab'); renderHistory(); }
+    });
+    document.getElementById('historySearchInput').addEventListener('input', e => { searchQuery = e.target.value; renderHistory(); });
+
     document.getElementById('accountsHistoryContainer').addEventListener('click', e => {
-      const btn = e.target.closest('button[data-undo-id]');
-      if (!btn) return;
-      const id = btn.getAttribute('data-undo-id');
+      const moveBtn = e.target.closest('button[data-move-day]');
+      if (moveBtn) {
+        const oldDay = moveBtn.getAttribute('data-move-day');
+        document.getElementById('moveDayOldDate').value = oldDay;
+        document.getElementById('moveDayNewDate').value = oldDay;
+        document.getElementById('moveDayInfoText').textContent = `سيتم نقل جميع العمليات المسجلة بتاريخ (${oldDay}) إلى التاريخ الجديد الذي تختاره:`;
+        document.getElementById('moveDayModal').classList.remove('hidden');
+        return;
+      }
+
+      const qExpBtn = e.target.closest('button[data-quick-export-day]');
+      if (qExpBtn) {
+        exportSingleDayFile(qExpBtn.getAttribute('data-quick-export-day'));
+        return;
+      }
+
+      const editBtn = e.target.closest('button[data-edit-id]');
+      if (editBtn) {
+        const item = state.history.find(h => h.id === editBtn.getAttribute('data-edit-id'));
+        if (!item) return;
+        document.getElementById('editOpId').value = item.id;
+        document.getElementById('editOpDate').value = getItemDate(item);
+        document.getElementById('editOpTime').value = item.timeStr || '';
+        document.getElementById('editOpAmount').value = item.amount;
+        document.getElementById('editOpNumber').value = item.opNumber || item.note || '';
+        document.getElementById('editOpModal').classList.remove('hidden');
+        return;
+      }
+
+      const delBtn = e.target.closest('button[data-undo-id]');
+      if (delBtn) {
+        const id = delBtn.getAttribute('data-undo-id');
+        const item = state.history.find(h => h.id === id);
+        if (!item || !confirm('حذف هذه العملية وإرجاع الرصيد؟')) return;
+        if (item.type === 'transfer') {
+          const f = state.accounts.find(a => a.id === item.fromId || a.name === item.fromName);
+          const t = state.accounts.find(a => a.id === item.toId || a.name === item.toName);
+          if (f) f.usd = Number((Number(f.usd || 0) + item.amount).toFixed(2));
+          if (t) t.usd = Number((Number(t.usd || 0) - item.amount).toFixed(2));
+        } else {
+          const acc = state.accounts.find(a => a.id === item.accountId || a.name === item.accountName);
+          if (acc) acc.usd = Number((Number(acc.usd || 0) + (item.type === 'deposit' ? -item.amount : item.amount)).toFixed(2));
+        }
+        state.deletedIds.push(id);
+        state.history = state.history.filter(h => h.id !== id);
+        saveState(true); renderAll();
+        showToast('تم الحذف والمزامنة ✓');
+      }
+    });
+
+    ['closeEditOpModalBtn', 'cancelEditOpBtn'].forEach(id => document.getElementById(id).addEventListener('click', () => document.getElementById('editOpModal').classList.add('hidden')));
+    document.getElementById('editOpForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const id = document.getElementById('editOpId').value;
       const item = state.history.find(h => h.id === id);
       if (!item) return;
 
-      if (item.type === 'deposit' || item.type === 'withdraw' || item.type === 'expense') {
-        const acc = state.accounts.find(a => a.id === item.accountId || a.name === item.accountName);
-        if (acc) {
-          const reverseDelta = item.type === 'deposit' ? -item.amount : item.amount;
-          acc.usd = Number((Number(acc.usd || 0) + reverseDelta).toFixed(2));
+      const newAmt = parseFloat(document.getElementById('editOpAmount').value);
+      const diff = newAmt - Number(item.amount || 0);
+      if (diff !== 0) {
+        if (item.type === 'transfer') {
+          const f = state.accounts.find(a => a.id === item.fromId || a.name === item.fromName);
+          const t = state.accounts.find(a => a.id === item.toId || a.name === item.toName);
+          if (f) f.usd = Number((Number(f.usd || 0) - diff).toFixed(2));
+          if (t) t.usd = Number((Number(t.usd || 0) + diff).toFixed(2));
+        } else {
+          const acc = state.accounts.find(a => a.id === item.accountId || a.name === item.accountName);
+          if (acc) acc.usd = Number((Number(acc.usd || 0) + (item.type === 'deposit' ? diff : -diff)).toFixed(2));
         }
-      } else if (item.type === 'transfer') {
-        const fromAcc = state.accounts.find(a => a.id === item.fromId || a.name === item.fromName);
-        const toAcc = state.accounts.find(a => a.id === item.toId || a.name === item.toName);
-        if (fromAcc) fromAcc.usd = Number((Number(fromAcc.usd || 0) + item.amount).toFixed(2));
-        if (toAcc) toAcc.usd = Number((Number(toAcc.usd || 0) - item.amount).toFixed(2));
       }
 
-      if (!Array.isArray(state.deletedIds)) state.deletedIds = [];
-      state.deletedIds.push(id);
-      state.history = state.history.filter(h => h.id !== id);
-      saveState(true);
-      renderAll();
-      showToast('تم حذف العملية ومزامنة التعديل ✓');
+      item.amount = newAmt;
+      item.date = document.getElementById('editOpDate').value;
+      delete item.shiftDate;
+      delete item.excludeFromTotal;
+      item.timeStr = document.getElementById('editOpTime').value;
+      item.opNumber = document.getElementById('editOpNumber').value.trim().replace(/^#+/, '');
+
+      saveState(true); renderAll();
+      document.getElementById('editOpModal').classList.add('hidden');
+      showToast('تم تعديل العملية ومزامنتها ✓');
     });
 
-    function generateSingleDayBlock(selectedDate) {
-      const allHistory = state.history || [];
-      const dayOps = allHistory.filter(h => {
-        if (h.excludeFromTotal) return false;
-        return getItemDate(h) === selectedDate;
-      }).reverse();
+    ['closeMoveDayModalBtn', 'cancelMoveDayBtn'].forEach(id => document.getElementById(id).addEventListener('click', () => document.getElementById('moveDayModal').classList.add('hidden')));
+    document.getElementById('moveDayForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const oldDay = document.getElementById('moveDayOldDate').value;
+      const newDay = document.getElementById('moveDayNewDate').value;
+      if (!oldDay || !newDay || oldDay === newDay) { document.getElementById('moveDayModal').classList.add('hidden'); return; }
 
-      if (dayOps.length === 0) return null;
+      let count = 0;
+      state.history.forEach(h => {
+        if (getItemDate(h) === oldDay) {
+          h.date = newDay;
+          delete h.shiftDate;
+          count++;
+        }
+      });
 
-      const depositOps = dayOps.filter(op => op.type === 'deposit');
-      const withdrawOps = dayOps.filter(op => op.type === 'withdraw');
-      const expenseOps = dayOps.filter(op => op.type === 'expense');
-      const transferOps = dayOps.filter(op => op.type === 'transfer');
+      saveState(true); renderAll();
+      document.getElementById('moveDayModal').classList.add('hidden');
+      showToast(`تم نقل ${count} عمليات إلى تاريخ ${newDay} ✓`);
+    });
 
-      let dayDepUsd = 0, dayWdUsd = 0, dayExpUsd = 0;
-      depositOps.forEach(op => { dayDepUsd += Number(op.amount) || 0; });
-      withdrawOps.forEach(op => { dayWdUsd += Number(op.amount) || 0; });
-      expenseOps.forEach(op => { dayExpUsd += Number(op.amount) || 0; });
+    // التصدير اليومي
+    function generateSingleDayBlock(selectedDate, closingBalancesMap) {
+      const dayOps = (state.history || []).filter(h => getItemDate(h) === selectedDate).reverse();
+      if (!dayOps.length) return null;
 
-      let block = "==================================================\n";
-      block += `         📅 تقرير يوم: ${selectedDate}         \n`;
-      block += "==================================================\n";
+      const map = closingBalancesMap || computeDailyClosingBalances();
+      const endOfDayBalance = map[selectedDate] !== undefined ? map[selectedDate] : 0;
 
-      block += `• عدد الإيداعات: ${depositOps.length} | مجموع الإيداعات: ${formatUsd(dayDepUsd)}\n`;
-      block += `• عدد السحوبات: ${withdrawOps.length} | مجموع السحوبات: ${formatUsd(dayWdUsd)}\n`;
-      if (expenseOps.length > 0) {
-        block += `• عدد المصروفات: ${expenseOps.length} | مجموع المصروفات: ${formatUsd(dayExpUsd)}\n`;
+      const deps = dayOps.filter(o => o.type === 'deposit');
+      const wds = dayOps.filter(o => o.type === 'withdraw');
+      const exps = dayOps.filter(o => o.type === 'expense');
+      const trs = dayOps.filter(o => o.type === 'transfer');
+
+      const sumDep = deps.reduce((s, o) => s + (Number(o.amount) || 0), 0);
+      const sumWd = wds.reduce((s, o) => s + (Number(o.amount) || 0), 0);
+      const sumExp = exps.reduce((s, o) => s + (Number(o.amount) || 0), 0);
+
+      let txt = `==================================================\n`;
+      txt += `             📅 تقرير يوم: ${selectedDate}\n`;
+      txt += `==================================================\n`;
+      txt += `• عدد الإيداعات: ${deps.length} | مجموع الإيداعات: ${formatUsd(sumDep)}\n`;
+      txt += `• عدد السحوبات: ${wds.length} | مجموع السحوبات: ${formatUsd(sumWd)}\n`;
+      if (exps.length) txt += `• عدد المصروفات: ${exps.length} | مجموع المصروفات: ${formatUsd(sumExp)}\n`;
+      txt += `• صافي حركة اليوم: ${formatUsd(sumDep - sumWd - sumExp)}\n`;
+      txt += `• 💰 إجمالي الرصيد بنهاية اليوم: ${formatUsd(endOfDayBalance)}\n`;
+      txt += `--------------------------------------------------\n`;
+
+      txt += `➕ الإيداعات (${deps.length}):\n`;
+      txt += deps.length ? deps.map((h, i) => `   ${i + 1}. ${formatUsd(h.amount)} | حساب: ${h.accountName || '-'} | رقم: ${(h.opNumber || h.note) ? '#' + (h.opNumber || h.note) : 'بدون'} | ${selectedDate}${h.timeStr ? ' (' + h.timeStr + ')' : ''}`).join('\n') + '\n' : '   لا يوجد.\n';
+
+      txt += `\n➖ السحوبات (${wds.length}):\n`;
+      txt += wds.length ? wds.map((h, i) => `   ${i + 1}. ${formatUsd(h.amount)} | حساب: ${h.accountName || '-'} | رقم: ${(h.opNumber || h.note) ? '#' + (h.opNumber || h.note) : 'بدون'} | ${selectedDate}${h.timeStr ? ' (' + h.timeStr + ')' : ''}`).join('\n') + '\n' : '   لا يوجد.\n';
+
+      if (exps.length) {
+        txt += `\n💸 المصروفات (${exps.length}):\n`;
+        txt += exps.map((h, i) => `   ${i + 1}. ${formatUsd(h.amount)} | من: ${h.accountName || '-'} | بيان: ${(h.opNumber || h.note) || 'بدون'} | ${selectedDate}${h.timeStr ? ' (' + h.timeStr + ')' : ''}`).join('\n') + '\n';
       }
-      block += `• صافي حركة اليوم: ${formatUsd(dayDepUsd - dayWdUsd - dayExpUsd)}\n`;
-      block += "--------------------------------------------------\n";
-
-      block += `➕ الإيداعات (${depositOps.length}):\n`;
-      if (depositOps.length === 0) {
-        block += "   لا يوجد.\n";
-      } else {
-        depositOps.forEach((h, idx) => {
-          const amtStr = formatUsd(h.amount);
-          const accName = h.accountName || 'غير محدد';
-          const opNum = (h.opNumber || h.note) ? `#${h.opNumber || h.note}` : 'بدون رقم';
-          const timeInfo = h.timeStr ? ` (${h.timeStr})` : '';
-          block += `   ${idx + 1}. ${amtStr} | حساب: ${accName} | عملية: ${opNum} | ${selectedDate}${timeInfo}\n`;
-        });
+      if (trs.length) {
+        txt += `\n🔄 النقل (${trs.length}):\n`;
+        txt += trs.map((h, i) => `   ${i + 1}. ${formatUsd(h.amount)} | من ${h.fromName} إلى ${h.toName}`).join('\n') + '\n';
       }
+      return txt;
+    }
 
-      block += `\n➖ السحوبات (${withdrawOps.length}):\n`;
-      if (withdrawOps.length === 0) {
-        block += "   لا يوجد.\n";
-      } else {
-        withdrawOps.forEach((h, idx) => {
-          const amtStr = formatUsd(h.amount);
-          const accName = h.accountName || 'غير محدد';
-          const opNum = (h.opNumber || h.note) ? `#${h.opNumber || h.note}` : 'بدون رقم';
-          const timeInfo = h.timeStr ? ` (${h.timeStr})` : '';
-          block += `   ${idx + 1}. ${amtStr} | حساب: ${accName} | عملية: ${opNum} | ${selectedDate}${timeInfo}\n`;
-        });
-      }
+    function downloadTextFile(filename, content) {
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
 
-      if (expenseOps.length > 0) {
-        block += `\n💸 المصروفات (${expenseOps.length}):\n`;
-        expenseOps.forEach((h, idx) => {
-          const amtStr = formatUsd(h.amount);
-          const accName = h.accountName || 'غير محدد';
-          const opNum = (h.opNumber || h.note) ? `#${h.opNumber || h.note}` : 'بدون بيان';
-          const timeInfo = h.timeStr ? ` (${h.timeStr})` : '';
-          block += `   ${idx + 1}. ${amtStr} | من حساب: ${accName} | البيان: ${opNum} | ${selectedDate}${timeInfo}\n`;
-        });
-      }
-
-      if (transferOps.length > 0) {
-        block += `\n🔄 النقل بين الحسابات (${transferOps.length}):\n`;
-        transferOps.forEach((h, idx) => {
-          const amtStr = formatUsd(h.amount);
-          const opNum = (h.opNumber || h.note) ? `#${h.opNumber || h.note}` : 'بدون رقم';
-          block += `   ${idx + 1}. ${amtStr} | من ${h.fromName} إلى ${h.toName} | عملية: ${opNum}\n`;
-        });
-      }
-
-      return block;
+    function exportSingleDayFile(day) {
+      const txt = generateSingleDayBlock(day);
+      if (!txt) { showToast(`لا توجد عمليات في يوم ${day}`); return; }
+      downloadTextFile(`ShamCash_${day}.txt`, txt);
+      showToast(`تم تصدير تقرير ${day} ✓`);
     }
 
     document.getElementById('exportReportBtn').addEventListener('click', () => {
-      const selectedDate = document.getElementById('exportDateInput').value;
-      if (!selectedDate) {
-        showToast('الرجاء اختيار التاريخ أولاً');
-        return;
-      }
-
-      const reportText = generateSingleDayBlock(selectedDate);
-      if (!reportText) {
-        showToast(`لا توجد عمليات مسجلة في يوم ${selectedDate}`);
-        return;
-      }
-
-      const blob = new Blob([reportText], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `ShamCash_Day_${selectedDate}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      showToast(`تم تصدير تقرير يوم ${selectedDate} بنجاح ✓`);
+      const d = document.getElementById('exportDateInput').value;
+      if (d) exportSingleDayFile(d);
     });
 
     document.getElementById('exportAllDaysBtn').addEventListener('click', () => {
-      const allHistory = (state.history || []).filter(h => !h.excludeFromTotal);
-      if (allHistory.length === 0) {
-        showToast('لا توجد عمليات مسجلة لتصديرها');
-        return;
-      }
-
-      const uniqueDates = Array.from(new Set(allHistory.map(h => getItemDate(h)))).sort().reverse();
+      const ops = state.history || [];
+      if (!ops.length) { showToast('لا توجد عمليات مسجلة'); return; }
+      const days = Array.from(new Set(ops.map(getItemDate))).sort().reverse();
       const totals = computeFinalTotals();
+      const closingMap = computeDailyClosingBalances();
+      const currentTotalBal = getActiveAccounts().reduce((s, a) => s + (Number(a.usd) || 0), 0);
 
-      let fullReport = "**************************************************\n";
-      fullReport += "      السجل الشامل للجرد اليومي (كل يوم بيومه)      \n";
-      fullReport += `      عدد الأيام المسجلة: ${uniqueDates.length} يوم      \n`;
-      fullReport += "**************************************************\n";
-      fullReport += `• إجمالي الإيداعات الكلي: ${formatUsd(totals.depUsd)}\n`;
-      fullReport += `• إجمالي السحوبات الكلي: ${formatUsd(totals.wdUsd)}\n`;
-      fullReport += `• إجمالي المصروفات الكلي: ${formatUsd(totals.expUsd)}\n`;
-      fullReport += "**************************************************\n\n";
+      let full = `**************************************************\n`;
+      full += `      السجل اليومي الشامل (كل يوم بيومه)\n`;
+      full += `      عدد الأيام: ${days.length} | تاريخ التصدير: ${getLocalTodayStr()}\n`;
+      full += `**************************************************\n`;
+      full += `• 💰 إجمالي الرصيد الحالي: ${formatUsd(currentTotalBal)}\n`;
+      full += `• إجمالي الإيداعات: ${formatUsd(totals.depUsd)}\n`;
+      full += `• إجمالي السحوبات: ${formatUsd(totals.wdUsd)}\n`;
+      full += `• إجمالي المصروفات: ${formatUsd(totals.expUsd)}\n`;
+      full += `**************************************************\n\n`;
+      days.forEach(d => { const b = generateSingleDayBlock(d, closingMap); if (b) full += b + '\n\n'; });
 
-      uniqueDates.forEach(dStr => {
-        const block = generateSingleDayBlock(dStr);
-        if (block) {
-          fullReport += block + "\n\n";
-        }
-      });
-
-      const blob = new Blob([fullReport], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `ShamCash_All_Days_${new Date().toLocaleDateString('en-CA')}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      showToast(`تم تصدير جرد ${uniqueDates.length} أيام (كل يوم بيومه) ✓`);
+      downloadTextFile(`ShamCash_All_Days_${getLocalTodayStr()}.txt`, full);
+      showToast(`تم تصدير ${days.length} أيام (كل يوم بيومه) ✓`);
     });
 
     document.getElementById('copyReportBtn').addEventListener('click', () => {
-      const selectedDate = document.getElementById('exportDateInput').value;
-      if (!selectedDate) return;
-      const reportText = generateSingleDayBlock(selectedDate);
-      if (!reportText) {
-        showToast(`لا توجد عمليات مسجلة في يوم ${selectedDate}`);
-        return;
-      }
-      navigator.clipboard.writeText(reportText).then(() => {
-        showToast(`تم نسخ تقرير يوم ${selectedDate} للحافظة ✓`);
-      });
+      const d = document.getElementById('exportDateInput').value;
+      const txt = d ? generateSingleDayBlock(d) : null;
+      if (!txt) { showToast(`لا توجد عمليات في يوم ${d}`); return; }
+      navigator.clipboard.writeText(txt).then(() => showToast(`تم نسخ تقرير ${d} ✓`));
     });
 
+    // النسخ الاحتياطي والاستيراد
     document.getElementById('downloadBackupJsonBtn').addEventListener('click', () => {
-      const backupPayload = {
-        exportedAt: new Date().toISOString(),
-        app: 'ShamCash_Ledger_USD',
-        state: state
-      };
-      const blob = new Blob([JSON.stringify(backupPayload, null, 2)], { type: 'application/json;charset=utf-8' });
+      const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), state }, null, 2)], { type: 'application/json;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = `ShamCash_Backup_${new Date().toLocaleDateString('en-CA')}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      a.href = url; a.download = `ShamCash_Backup_${getLocalTodayStr()}.json`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      showToast('تم تحميل ملف النسخة الاحتياطية (.json) ✓');
+      showToast('تم حفظ النسخة الاحتياطية (.json) ✓');
     });
 
-    document.getElementById('triggerImportJsonBtn').addEventListener('click', () => {
-      document.getElementById('importJsonFileInput').click();
-    });
-
+    document.getElementById('triggerImportJsonBtn').addEventListener('click', () => document.getElementById('importJsonFileInput').click());
     document.getElementById('importJsonFileInput').addEventListener('change', e => {
       const file = e.target.files && e.target.files[0];
       if (!file) return;
-
       const reader = new FileReader();
       reader.onload = ev => {
         try {
           const parsed = JSON.parse(ev.target.result);
-          const importedState = parsed.state ? parsed.state : parsed;
-
-          if (!importedState || !Array.isArray(importedState.history)) {
-            showToast('⚠️ الملف المختار لا يحتوي على سجلات صالحة');
-            return;
-          }
-
-          const importedOps = importedState.history;
-          const existingIds = new Set((state.history || []).map(h => h.id));
-          let addedCount = 0;
-
-          const importedIdsSet = new Set(importedOps.map(op => op.id));
-          state.deletedIds = (state.deletedIds || []).filter(id => !importedIdsSet.has(id));
-
-          importedOps.forEach(op => {
-            if (op && op.id && !existingIds.has(op.id)) {
-              state.history.push(op);
-              addedCount++;
-            }
+          const imp = parsed.state || parsed;
+          if (!imp || !Array.isArray(imp.history)) { showToast('⚠️ ملف غير صالح'); return; }
+          const existingIds = new Set(state.history.map(h => h.id));
+          let added = 0;
+          imp.history.forEach(op => {
+            if (op && op.id && !existingIds.has(op.id)) { state.history.push(op); added++; }
           });
-
           state.history.sort((a, b) => (Number(b.createdAt) || 0) - (Number(a.createdAt) || 0));
-
-          if (existingIds.size === 0 && Array.isArray(importedState.accounts) && importedState.accounts.length > 0) {
-            state.accounts = importedState.accounts;
-            state.initialDepositUsd = Number(importedState.initialDepositUsd) || 0;
-            state.initialWithdrawUsd = Number(importedState.initialWithdrawUsd) || 0;
-            state.initialExpenseUsd = Number(importedState.initialExpenseUsd) || 0;
-          }
-
-          saveState(true);
-          renderAll();
-          showToast(`تم حمل ودمج ${addedCount} عملية قديمة ومزامنتها ✓`);
-        } catch (err) {
-          showToast('⚠️ تعذر قراءة الملف، تأكد أنه بصيغة JSON صحيحة');
-        }
+          saveState(true); renderAll();
+          showToast(`تم حمل ودمج ${added} عملية ✓`);
+        } catch (err) { showToast('⚠️ خطأ بقراءة الملف'); }
         e.target.value = '';
       };
       reader.readAsText(file);
