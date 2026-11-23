@@ -28,6 +28,25 @@
       </div>
     </div>
 
+    <!-- نافذة تنبيه تكرار رقم العملية -->
+    <section id="duplicateOpModal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3">
+      <div class="bg-slate-900 border-2 border-amber-500/60 rounded-2xl p-4 w-full max-w-md shadow-2xl space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+          <h2 class="text-xs font-extrabold text-amber-400">⚠️ تنبيه: رقم العملية موجود مسبقاً!</h2>
+          <button id="closeDuplicateModalBtn" type="button" class="text-xs text-slate-400 hover:text-white font-bold px-2 py-0.5 rounded bg-slate-800">إغلاق ✕</button>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          رقم العملية <span id="dupOpNumberBadge" class="px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 font-extrabold num-font">#---</span> مسجل من قبل في السجل:
+        </p>
+        <div id="dupMatchesList" class="space-y-2 max-h-48 overflow-y-auto bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 text-xs"></div>
+        <p class="text-[11px] text-slate-400">هل تريد تأكيد إضافة العملية الجديدة رغم التكرار أم إلغاء الإضافة؟</p>
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button id="confirmDuplicateAddBtn" type="button" class="py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs transition">إضافة رغم التكرار ✓</button>
+          <button id="cancelDuplicateAddBtn" type="button" class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition">إلغاء الإضافة ✕</button>
+        </div>
+      </div>
+    </section>
+
     <!-- نافذة تعديل عملية -->
     <section id="editOpModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3">
       <div class="bg-slate-900 border-2 border-sky-500/50 rounded-2xl p-4 w-full max-w-md shadow-2xl space-y-3">
@@ -198,7 +217,8 @@
 
         <div>
           <label id="opNumberLabel" for="opOpNumber" class="block text-[11px] font-bold text-slate-300 mb-1">رقم العملية / بيان (اختياري)</label>
-          <input id="opOpNumber" type="text" placeholder="مثال: 1024 أو سبب المصروف..." class="w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-white num-font" />
+          <input id="opOpNumber" type="text" placeholder="مثال: 1024 أو سبب المصروف..." class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-amber-500 focus:outline-none px-3 py-2 text-xs text-white num-font" />
+          <div id="dupHintBanner" class="hidden mt-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[11px] font-bold text-amber-300"></div>
         </div>
 
         <button id="submitOpBtn" type="submit" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition">تأكيد الإيداع وتحديث الرصيد</button>
@@ -288,6 +308,7 @@
     let selectedHistoryType = 'ALL';
     let searchQuery = '';
     let hasPulledFromCloudOnce = false;
+    let pendingDuplicateOp = null;
 
     function loadState() {
       try {
@@ -408,6 +429,7 @@
 
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
         renderAll();
+        updateDuplicateHint();
         setSyncBadge('ok', '☁️ متزامن تلقائياً');
         if (showNotification) showToast('تمت المزامنة مع السحابة بنجاح ✓');
       } catch (e) {
@@ -442,6 +464,72 @@
       return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
+    function normalizeOpRef(val) {
+      return String(val || '').trim().replace(/^#+/, '').toLowerCase();
+    }
+
+    function findExistingOpsByRef(rawRef) {
+      const target = normalizeOpRef(rawRef);
+      if (!target) return [];
+      return (state.history || []).filter(h => normalizeOpRef(h.opNumber || h.note || '') === target);
+    }
+
+    function getTypeLabelAr(type) {
+      if (type === 'deposit') return 'إيداع';
+      if (type === 'withdraw') return 'سحب';
+      if (type === 'expense') return 'مصروف';
+      return 'نقل';
+    }
+
+    function updateDuplicateHint() {
+      const banner = document.getElementById('dupHintBanner');
+      const raw = document.getElementById('opOpNumber').value;
+      const matches = findExistingOpsByRef(raw);
+      if (!matches.length) {
+        banner.classList.add('hidden');
+        banner.textContent = '';
+        return;
+      }
+      const first = matches[0];
+      banner.classList.remove('hidden');
+      banner.textContent = `⚠️ رقم العملية هذا موجود مسبقاً (${matches.length}) — مثال: ${formatUsd(first.amount)} بتاريخ ${getItemDate(first)}`;
+    }
+
+    document.getElementById('opOpNumber').addEventListener('input', updateDuplicateHint);
+
+    function openDuplicateModal(rawRef, matches, payload) {
+      pendingDuplicateOp = payload;
+      document.getElementById('dupOpNumberBadge').textContent = `#${rawRef}`;
+      document.getElementById('dupMatchesList').innerHTML = matches.map(m => {
+        const accLabel = m.type === 'transfer' ? `${escapeHtml(m.fromName)} ← ${escapeHtml(m.toName)}` : escapeHtml(m.accountName || '-');
+        return `
+          <div class="bg-slate-900 border border-slate-800 rounded-lg p-2 flex items-center justify-between gap-2">
+            <div class="space-y-0.5">
+              <div class="font-bold text-white"><span class="text-amber-300">${getTypeLabelAr(m.type)}</span> • <span class="num-font">${formatUsd(m.amount)}</span></div>
+              <div class="text-[11px] text-slate-400">حساب: ${accLabel} • 📅 <span class="num-font">${getItemDate(m)}</span>${m.timeStr ? ` <span class="num-font">(${m.timeStr})</span>` : ''}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      document.getElementById('duplicateOpModal').classList.remove('hidden');
+    }
+
+    function closeDuplicateModal() {
+      pendingDuplicateOp = null;
+      document.getElementById('duplicateOpModal').classList.add('hidden');
+    }
+
+    ['closeDuplicateModalBtn', 'cancelDuplicateAddBtn'].forEach(id => {
+      document.getElementById(id).addEventListener('click', closeDuplicateModal);
+    });
+
+    document.getElementById('confirmDuplicateAddBtn').addEventListener('click', () => {
+      if (!pendingDuplicateOp) return;
+      const payload = pendingDuplicateOp;
+      closeDuplicateModal();
+      commitOperation(payload);
+    });
+
     function getActiveAccounts() { return state.accounts.filter(a => a.active); }
 
     function doesItemBelongToAccount(h, acc) {
@@ -470,6 +558,26 @@
       });
 
       return closingMap;
+    }
+
+    function computeCumulativeDepositsByDay() {
+      const allHistory = state.history || [];
+      const allDates = Array.from(new Set(allHistory.map(getItemDate))).sort();
+      const dayDepMap = {};
+      allHistory.forEach(op => {
+        if (op.type !== 'deposit') return;
+        const d = getItemDate(op);
+        dayDepMap[d] = (dayDepMap[d] || 0) + (Number(op.amount) || 0);
+      });
+
+      let runningDep = Number(state.initialDepositUsd) || 0;
+      const cumulativeMap = {};
+      allDates.forEach(day => {
+        runningDep += (dayDepMap[day] || 0);
+        cumulativeMap[day] = Number(runningDep.toFixed(2));
+      });
+
+      return cumulativeMap;
     }
 
     function computeFinalTotals() {
@@ -530,6 +638,7 @@
       const activeAccs = getActiveAccounts();
       const allHistory = state.history || [];
       const closingBalancesMap = computeDailyClosingBalances();
+      const cumulativeDepositsMap = computeCumulativeDepositsByDay();
 
       if (selectedHistoryAccId !== 'ALL' && !activeAccs.some(a => a.id === selectedHistoryAccId)) selectedHistoryAccId = 'ALL';
 
@@ -590,6 +699,7 @@
         });
 
         const endOfDayBal = closingBalancesMap[day] !== undefined ? closingBalancesMap[day] : 0;
+        const cumDepUpToDay = cumulativeDepositsMap[day] !== undefined ? cumulativeDepositsMap[day] : 0;
 
         const rowsHtml = items.map(h => {
           let badge = '', desc = '';
@@ -629,6 +739,10 @@
                 <span class="text-emerald-400">➕ إيداع: <strong class="num-font">${formatUsd(dDep)}</strong></span>
                 <span class="text-rose-400">➖ سحب: <strong class="num-font">${formatUsd(dWd)}</strong></span>
                 ${dExp > 0 ? `<span class="text-amber-400">💸 مصروف: <strong class="num-font">${formatUsd(dExp)}</strong></span>` : ''}
+              </div>
+              <div class="bg-sky-500/10 border border-sky-500/25 rounded-lg px-2.5 py-1 flex items-center justify-between text-[11px]">
+                <span class="font-bold text-sky-300">📊 مجموع الإيداعات لحد هذا اليوم:</span>
+                <span class="font-extrabold text-sky-300 num-font text-xs">${formatUsd(cumDepUpToDay)}</span>
               </div>
               <div class="bg-emerald-500/10 border border-emerald-500/25 rounded-lg px-2.5 py-1 flex items-center justify-between text-[11px]">
                 <span class="font-bold text-emerald-300">💰 إجمالي الرصيد بنهاية اليوم:</span>
@@ -727,19 +841,11 @@
     document.getElementById('setTodayBtn').addEventListener('click', () => { resetTodayInputs(); showToast('تم الضبط على تاريخ اليوم'); });
     opDateInput.addEventListener('change', () => { if (opDateInput.value) document.getElementById('exportDateInput').value = opDateInput.value; });
 
-    document.getElementById('operationForm').addEventListener('submit', e => {
-      e.preventDefault();
-      const amount = parseFloat(document.getElementById('opAmount').value);
-      const selectedDate = opDateInput.value || getLocalTodayStr();
-      const timeVal = opTimeInput.value || getLocalTimeStr();
-      const opNumber = document.getElementById('opOpNumber').value.trim().replace(/^#+/, '');
-      if (!amount || amount <= 0) return;
-
+    function commitOperation(payload) {
+      const { amount, selectedDate, timeVal, opNumber, mode, accountId, fromId, toId } = payload;
       const now = Date.now();
-      if (currentMode === 'transfer') {
-        const fromId = document.getElementById('fromAccount').value;
-        const toId = document.getElementById('toAccount').value;
-        if (!fromId || !toId || fromId === toId) { showToast('اختر حسابين مختلفين'); return; }
+
+      if (mode === 'transfer') {
         const fAcc = state.accounts.find(a => a.id === fromId);
         const tAcc = state.accounts.find(a => a.id === toId);
         if (!fAcc || !tAcc) return;
@@ -747,18 +853,53 @@
         tAcc.usd = Number((Number(tAcc.usd || 0) + amount).toFixed(2));
         state.history.unshift({ id: `h_${now}_${Math.floor(Math.random()*1000)}`, createdAt: now, date: selectedDate, timeStr: timeVal, type: 'transfer', amount, currency: 'USD', opNumber, fromId: fAcc.id, fromName: fAcc.name, toId: tAcc.id, toName: tAcc.name });
       } else {
-        const acc = state.accounts.find(a => a.id === document.getElementById('opAccount').value);
+        const acc = state.accounts.find(a => a.id === accountId);
         if (!acc) return;
-        const delta = currentMode === 'deposit' ? amount : -amount;
+        const delta = mode === 'deposit' ? amount : -amount;
         acc.usd = Number((Number(acc.usd || 0) + delta).toFixed(2));
-        state.history.unshift({ id: `h_${now}_${Math.floor(Math.random()*1000)}`, createdAt: now, date: selectedDate, timeStr: timeVal, type: currentMode, amount, currency: 'USD', opNumber, accountId: acc.id, accountName: acc.name });
+        state.history.unshift({ id: `h_${now}_${Math.floor(Math.random()*1000)}`, createdAt: now, date: selectedDate, timeStr: timeVal, type: mode, amount, currency: 'USD', opNumber, accountId: acc.id, accountName: acc.name });
       }
 
       saveState(); renderAll();
       document.getElementById('opAmount').value = '';
       document.getElementById('opOpNumber').value = '';
+      document.getElementById('dupHintBanner').classList.add('hidden');
       opTimeInput.value = getLocalTimeStr();
       showToast(`تم الحفظ بتاريخ ${selectedDate} ✓`);
+    }
+
+    document.getElementById('operationForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const amount = parseFloat(document.getElementById('opAmount').value);
+      const selectedDate = opDateInput.value || getLocalTodayStr();
+      const timeVal = opTimeInput.value || getLocalTimeStr();
+      const rawRef = document.getElementById('opOpNumber').value.trim().replace(/^#+/, '');
+      if (!amount || amount <= 0) return;
+
+      const payload = {
+        amount,
+        selectedDate,
+        timeVal,
+        opNumber: rawRef,
+        mode: currentMode,
+        accountId: document.getElementById('opAccount').value,
+        fromId: document.getElementById('fromAccount').value,
+        toId: document.getElementById('toAccount').value
+      };
+
+      if (payload.mode === 'transfer') {
+        if (!payload.fromId || !payload.toId || payload.fromId === payload.toId) { showToast('اختر حسابين مختلفين'); return; }
+      }
+
+      if (rawRef) {
+        const matches = findExistingOpsByRef(rawRef);
+        if (matches.length > 0) {
+          openDuplicateModal(rawRef, matches, payload);
+          return;
+        }
+      }
+
+      commitOperation(payload);
     });
 
     // أحداث السجل
@@ -878,12 +1019,14 @@
     });
 
     // التصدير اليومي
-    function generateSingleDayBlock(selectedDate, closingBalancesMap) {
+    function generateSingleDayBlock(selectedDate, closingBalancesMap, cumulativeDepositsMap) {
       const dayOps = (state.history || []).filter(h => getItemDate(h) === selectedDate).reverse();
       if (!dayOps.length) return null;
 
-      const map = closingBalancesMap || computeDailyClosingBalances();
-      const endOfDayBalance = map[selectedDate] !== undefined ? map[selectedDate] : 0;
+      const closeMap = closingBalancesMap || computeDailyClosingBalances();
+      const depCumMap = cumulativeDepositsMap || computeCumulativeDepositsByDay();
+      const endOfDayBalance = closeMap[selectedDate] !== undefined ? closeMap[selectedDate] : 0;
+      const cumDepUpToDay = depCumMap[selectedDate] !== undefined ? depCumMap[selectedDate] : 0;
 
       const deps = dayOps.filter(o => o.type === 'deposit');
       const wds = dayOps.filter(o => o.type === 'withdraw');
@@ -897,7 +1040,8 @@
       let txt = `==================================================\n`;
       txt += `             📅 تقرير يوم: ${selectedDate}\n`;
       txt += `==================================================\n`;
-      txt += `• عدد الإيداعات: ${deps.length} | مجموع الإيداعات: ${formatUsd(sumDep)}\n`;
+      txt += `• عدد الإيداعات: ${deps.length} | مجموع إيداعات اليوم: ${formatUsd(sumDep)}\n`;
+      txt += `• 📊 مجموع الإيداعات لحد هذا اليوم: ${formatUsd(cumDepUpToDay)}\n`;
       txt += `• عدد السحوبات: ${wds.length} | مجموع السحوبات: ${formatUsd(sumWd)}\n`;
       if (exps.length) txt += `• عدد المصروفات: ${exps.length} | مجموع المصروفات: ${formatUsd(sumExp)}\n`;
       txt += `• صافي حركة اليوم: ${formatUsd(sumDep - sumWd - sumExp)}\n`;
@@ -948,6 +1092,7 @@
       const days = Array.from(new Set(ops.map(getItemDate))).sort().reverse();
       const totals = computeFinalTotals();
       const closingMap = computeDailyClosingBalances();
+      const cumDepMap = computeCumulativeDepositsByDay();
       const currentTotalBal = getActiveAccounts().reduce((s, a) => s + (Number(a.usd) || 0), 0);
 
       let full = `**************************************************\n`;
@@ -959,7 +1104,7 @@
       full += `• إجمالي السحوبات: ${formatUsd(totals.wdUsd)}\n`;
       full += `• إجمالي المصروفات: ${formatUsd(totals.expUsd)}\n`;
       full += `**************************************************\n\n`;
-      days.forEach(d => { const b = generateSingleDayBlock(d, closingMap); if (b) full += b + '\n\n'; });
+      days.forEach(d => { const b = generateSingleDayBlock(d, closingMap, cumDepMap); if (b) full += b + '\n\n'; });
 
       downloadTextFile(`ShamCash_All_Days_${getLocalTodayStr()}.txt`, full);
       showToast(`تم تصدير ${days.length} أيام (كل يوم بيومه) ✓`);
